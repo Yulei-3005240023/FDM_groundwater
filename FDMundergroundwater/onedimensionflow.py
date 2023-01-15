@@ -60,10 +60,10 @@ class Confined_aquifer_SF(Stableflow):
         self.w = None
         self.t = None
 
-    def transmissivity(self, t=1):  # 承压含水层导水系数的设定，可以为一个常数也可以为带有前缀为sy.的函数，如sy.sin(x)
+    def transmissivity(self, t: str = "1"):  # 承压含水层导水系数的设定，可以为一个常数也可以为带有前缀为sy.的函数，如sy.sin(x)
         self.t = str(t)
 
-    def leakage_recharge(self, w=0):  # 承压含水层越流补给源汇项的设定，可以为一个常数也可以为带有前缀为sy.的函数,如sy.sin(x)
+    def leakage_recharge(self, w: str = "0"):  # 承压含水层越流补给源汇项的设定，可以为一个常数也可以为带有前缀为sy.的函数,如sy.sin(x)
         self.w = str(w)
 
     def solve(self):
@@ -88,7 +88,7 @@ class Confined_aquifer_SF(Stableflow):
         H_a = np.zeros((m, m))
         for i in range(0, m):  # 对列进行扫描
             # 源汇项赋值
-            H_b[i] = H_b[i] - W(i * self.sl)
+            H_b[i] = H_b[i] - W(i * self.sl) * (self.sl * self.sl)
             # 左右边界赋值
             if (i - 1) < 0:
                 H_b[i] = H_b[i] - (T(i * self.sl) - self.sl * (sy.diff(T(x), x).subs(x, i * self.sl))) * self.h_l
@@ -106,9 +106,6 @@ class Confined_aquifer_SF(Stableflow):
         H = nla.solve(H_a, H_b)
         for i in range(0, m):
             H_ALL[i] = H[i]
-        print(H_a)
-        print(H_b)
-        print(H)
         return H_ALL
 
 
@@ -142,7 +139,7 @@ class Unstableflow:
     def t_length(self, tl):  # 时间轴轴长，原则上单位为天
         self.tl = float(tl)
 
-    def draw(self, H_ALL):
+    def draw(self, H_ALL: np.ndarray):
         # X轴单元格的数目
         m = int(self.xl // self.sl) + 1
         # 时间轴单元格数目
@@ -158,14 +155,16 @@ class Unstableflow:
         # 解决负号为方块的问题
         plt.rcParams['axes.unicode_minus'] = False
         fig = plt.figure(figsize=(10, 7))
-        ax = fig.add_subplot('3d')
+        ax = fig.add_subplot(projection='3d')
         ax.plot_surface(X, T, H_ALL, linewidth=0, antialiased=True, cmap=plt.get_cmap('rainbow'))
 
         def H_z(h_all):
             hz = 0
             for i in h_all:
-                if i > hz:
-                    hz = i
+                for j in i:
+                    if j > hz:
+                        hz = j
+            return hz
 
         ax.set_zlim(0, H_z(H_ALL))
         plt.title("差分数值解(差分步长%s)" % self.sl)
@@ -179,11 +178,11 @@ class Confined_aquifer_USF(Unstableflow):
         self.w = None
         self.a = None
 
-    def transmissivity(self, a=1):  # 承压含水层压力扩散系数的设定，等于
-        self.a = str(a)
+    def transmissivity(self, a: float = 1):  # 承压含水层压力扩散系数的设定，等于导水系数除以贮水系数T/S
+        self.a = float(a)
 
-    def leakage_recharge(self, w=0):  # 承压含水层越流补给源汇项的设定。
-        self.w = str(w)
+    def leakage_recharge(self, w: str = "0"):  # 承压含水层越流补给源汇项的设定。
+        self.w = w
 
     def solve(self):
         # 对于承压含水层一维非稳定流，定义两个参数 x t
@@ -204,23 +203,33 @@ class Confined_aquifer_USF(Unstableflow):
         H_b = np.zeros((m * n, 1))
         # 系数a矩阵
         H_a = np.zeros((m * n, m * n))
-        for k in range(0, n):  # 对行(时间轴)进行扫描
-            for i in range(0, m):  # 对列(X轴)进行扫描
-                # 源汇项赋值
-                H_b[i] = H_b[i] - W(i * self.sl)
-                # 左右边界赋值
-                if (i - 1) < 0:
-                    H_b[i] = H_b[i] - (T(i * self.sl) - self.sl * (sy.diff(T(x), x).subs(x, i * self.sl))) * self.h_l
-                if (i + 1) == m:
-                    H_b[i] = H_b[i] - T(self.l) * self.h_r
-                # 给位置为(i-1)处的水头赋上系数值
-                if (i - 1) >= 0:
-                    H_a[i, (i - 1)] = T(i * self.sl) - (self.sl * sy.diff(T(x), x).subs(x, i * self.sl))
-                # 给位置为(i+1)处的水头赋上系数值
-                if (i + 1) < m:
-                    H_a[i, (i + 1)] = T(self.l)
-                # 给位置为(i)处的水头赋上系数值
-                H_a[i, i] = self.sl * sy.diff(T(x), x).subs(x, i * self.sl) - 2 * T(self.l)
+        # 定义系数a矩阵的行数
+        l_a = 0
+        while l_a < m * n:
+            for k in range(0, n):  # 对行(时间轴)进行扫描
+                for i in range(0, m):  # 对列(X轴)进行扫描
+                    # 源汇项赋值
+                    H_b[l_a] = H_b[l_a] - self.a * (self.sl * self.sl) * self.st * W(i * self.sl)
+                    # 左右边界赋值
+                    if (i - 1) < 0:
+                        H_b[l_a] = H_b[k * n + i] - (self.a * self.st - self.sl * self.sl)
+                    if (i + 1) == m:
+                        H_b[k * n + i] = H_b[k * n + i] - self.a * self.st * self.h_r
+                    # 时间边界赋值
+                    if (k - 1) < 0:
+                        H_a[k * n + i, k * n + i] = H_a[k * n + i, k * n + i] + (self.sl * self.sl)  # 初始时刻设定为稳定流
+                    # 给位置为(i-1，k)处的水头赋上系数值
+                    if (i - 1) >= 0:
+                        H_a[k * n + i, k * n + i - 1] = H_a[k * n + i, k * n + i - 1] + self.a * self.st - self.sl * self.sl
+                    # 给位置为(i+1, k)处的水头赋上系数值
+                    if (i + 1) < m:
+                        H_a[k * n + i, k * n + i + 1] = H_a[k * n + i, k * n + i + 1] + self.a * self.st
+                    # 给位置为(i, k-1)处的水头赋上系数值
+                    if (k - 1) >= 0:
+                        H_a[(k - 1) * n + i, (k - 1) * n + i] = H_a[(k - 1) * n + i, (k - 1) * n + i] + self.sl * self.sl
+                    # 给位置为(i, k)处的水头赋上系数值
+                    H_a[k * n + i, k * n + i] = H_a[k * n + i, k * n + i] - 2 * self.a * self.st - self.sl * self.sl
+                    l_a += 1
         # 解矩阵方程
         H = nla.solve(H_a, H_b)
         for k in range(0, n):  # 对时间进行扫描
@@ -228,19 +237,18 @@ class Confined_aquifer_USF(Unstableflow):
                 H_ALL[k, i] = H[k * n + i]
         print(H_a)
         print(H_b)
-        print(H)
+        print(H_ALL)
         return H_ALL
 
 
 a = Confined_aquifer_USF()
-a.x_length(10)
-a.t_length(10)
-a.step_length(0.05)
+a.x_length(50)
+a.t_length(25)
+a.step_length(2)
 a.step_time(1)
-a.l_boundary(0)
-a.r_boundary(3)
 a.transmissivity(1)
-a.leakage_recharge(3)
+a.l_boundary(1)
+a.r_boundary(3)
+a.leakage_recharge("0")
 b = a.solve()
-print(b)
 a.draw(b)
