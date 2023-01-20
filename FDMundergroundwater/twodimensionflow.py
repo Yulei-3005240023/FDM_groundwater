@@ -22,7 +22,7 @@ class Stableflow:
         if Dirichlet:
             self.h_r = float(h_r)
 
-    def step_length(self, sl):  # 差分步长,此处默认X,Y轴
+    def step_length(self, sl):  # 差分步长,此处默认X,Y轴差分步长相同
         self.sl = float(sl)
 
     def x_length(self, xl):  # X轴轴长
