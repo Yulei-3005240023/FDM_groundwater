@@ -337,6 +337,8 @@ class Confined_aquifer_USF(Unstableflow):
 class Unconfined_aquifer_USF(Unstableflow):
     def __init__(self):
         super().__init__()
+        self.Sy = None
+        self.K = None
         self.w = None
         self.a = None
         self.ha = None
@@ -344,14 +346,23 @@ class Unconfined_aquifer_USF(Unstableflow):
     def reference_thickness(self, ha: float):  # 潜水含水层的参考厚度，使用参考厚度法来简化该方程
         self.ha = ha
 
-    def hydraulic_conductivity(self, a: float):  # 潜水含水层压力扩散系数的设定。等于渗透系数乘初始水头常数除给水度Kh0/Sy
+    def pressure_diffusion_coefficient(self, a: float):  # 潜水含水层压力扩散系数的设定。等于渗透系数乘初始水头常数除给水度Kh0/Sy
         self.a = a
 
-    def leakage_recharge(self, w: str = "0"):  # 潜水含水层源汇项的设定，可以为一个常数也可以为带有前缀为sy.的函数,如sy.sin(x)
-        self.w = str(w)
+    def leakage_recharge(self, w: str):  # 潜水含水层源汇项的设定，可以为一个常数也可以为带有前缀为sy.的函数,如sy.sin(x)
+        self.w = w
+
+    def hydraulic_conductivity(self, K: float):  # 潜水含水层渗透系数的设定
+        self.K = K
+
+    def storativity(self, Sy: float):  # 潜水含水层储水系数（重力给水度）的设定
+        self.Sy = Sy
 
     def solve(self):
-        # 对于承压含水层一维非稳定流，定义两个参数 x t
+        # 如果未设定压力扩散系数
+        if self.a is None:
+            self.a = (self.K * self.ha) / self.Sy
+        # 对于潜水含水层一维非稳定流，定义两个参数 x t
         x = symbols("x")
         t = symbols("t")
         # X轴差分点的数目
@@ -404,20 +415,23 @@ class Unconfined_aquifer_USF(Unstableflow):
         H = nla.solve(H_a, H_b)
         for k in range(0, n):  # 对时间进行扫描
             for i in range(0, m):  # 对空间进行扫描
-                H_ALL[k, i] = H[k * n + i]
+                H_ALL[k, i] = H[k * n + i] + self.ha
         print(H_a)
         print(H_b)
         print(H_ALL)
         return H_ALL
 
 
-a = Unconfined_aquifer_SF()
-a.length(10)
+a = Unconfined_aquifer_USF()
+a.x_length(10)
+a.t_length(5)
 a.step_length(0.5)
-a.hydraulic_conductivity("2-x")
+a.hydraulic_conductivity(0.05)
 a.l_boundary(-1)
 a.r_boundary(1)
-a.leakage_recharge("10")
+a.leakage_recharge("1")
 a.reference_thickness(10)
+a.initial_condition(1)
+a.storativity(10)
 b = a.solve()
 a.draw(b)
