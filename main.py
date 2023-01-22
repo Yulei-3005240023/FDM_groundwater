@@ -1,4 +1,6 @@
 import FDMundergroundwater.onedimensionflow as fo
+from PySide2.QtWidgets import QApplication, QMessageBox
+
 
 
 def print_hi(name):

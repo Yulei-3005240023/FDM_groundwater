@@ -212,11 +212,11 @@ class Unstableflow:
 
     def draw(self, H_ALL: np.ndarray):
         # X轴单元格的数目
-        m = int(self.xl // self.sl) + 1
+        m = int(self.xl / self.sl) + 1
         # 时间轴差分步长
         self.st = self.sl * self.tl / self.xl
         # 时间轴单元格数目
-        n = int(self.tl // self.st) + 1
+        n = int(self.tl / self.st) + 1
         # X轴
         X = np.linspace(0, self.xl, m)
         # 时间轴
@@ -229,7 +229,6 @@ class Unstableflow:
         plt.rcParams['axes.unicode_minus'] = False
         fig = plt.figure(figsize=(10, 7))
         ax = fig.add_subplot(projection='3d')
-        ax.plot_surface(X, T, H_ALL, linewidth=0, antialiased=True, cmap=plt.get_cmap('rainbow'))
 
         def maxH_z(h_all):
             hz = 0
@@ -248,6 +247,7 @@ class Unstableflow:
             return hz
 
         ax.set_zlim(minH_z(H_ALL), maxH_z(H_ALL))
+        ax.plot_surface(X, T, H_ALL, linewidth=0, antialiased=True, cmap=plt.get_cmap('rainbow'))
         plt.title("差分数值解(差分步长%s)" % self.sl)
         plt.show()
 
@@ -337,6 +337,8 @@ class Confined_aquifer_USF(Unstableflow):
 class Unconfined_aquifer_USF(Unstableflow):
     def __init__(self):
         super().__init__()
+        self.Sy = None
+        self.K = None
         self.w = None
         self.a = None
         self.ha = None
@@ -344,14 +346,23 @@ class Unconfined_aquifer_USF(Unstableflow):
     def reference_thickness(self, ha: float):  # 潜水含水层的参考厚度，使用参考厚度法来简化该方程
         self.ha = ha
 
-    def hydraulic_conductivity(self, a: float):  # 潜水含水层压力扩散系数的设定。等于渗透系数乘初始水头常数除给水度Kh0/Sy
+    def pressure_diffusion_coefficient(self, a: float):  # 潜水含水层压力扩散系数的设定。等于渗透系数乘初始水头常数除给水度Kh0/Sy
         self.a = a
 
-    def leakage_recharge(self, w: str = "0"):  # 潜水含水层源汇项的设定，可以为一个常数也可以为带有前缀为sy.的函数,如sy.sin(x)
-        self.w = str(w)
+    def leakage_recharge(self, w: str):  # 潜水含水层源汇项的设定，可以为一个常数也可以为带有前缀为sy.的函数,如sy.sin(x)
+        self.w = w
+
+    def hydraulic_conductivity(self, K: float):  # 潜水含水层渗透系数的设定
+        self.K = K
+
+    def storativity(self, Sy: float):  # 潜水含水层储水系数（重力给水度）的设定
+        self.Sy = Sy
 
     def solve(self):
-        # 对于承压含水层一维非稳定流，定义两个参数 x t
+        # 如果未设定压力扩散系数
+        if self.a is None:
+            self.a = (self.K * self.ha) / self.Sy
+        # 对于潜水含水层一维非稳定流，定义两个参数 x t
         x = symbols("x")
         t = symbols("t")
         # X轴差分点的数目
@@ -398,26 +409,11 @@ class Unconfined_aquifer_USF(Unstableflow):
                             H_a[l_a, l_a + 1] = H_a[l_a, l_a + 1] + self.a * self.st
                         # 给位置为(i, k-1)处的水头赋上系数值
                         if (k - 1) >= 0:
-                            H_a[l_a, l_a - n] = H_a[l_a, l_a - n] + self.a * self.sl
+                            H_a[l_a, l_a - n] = H_a[l_a, l_a - n] + self.sl * self.sl
                     l_a += 1
         # 解矩阵方程
         H = nla.solve(H_a, H_b)
         for k in range(0, n):  # 对时间进行扫描
             for i in range(0, m):  # 对空间进行扫描
-                H_ALL[k, i] = H[k * n + i]
-        print(H_a)
-        print(H_b)
-        print(H_ALL)
+                H_ALL[k, i] = float(H[k * n + i] + self.ha)
         return H_ALL
-
-
-a = Unconfined_aquifer_SF()
-a.length(10)
-a.step_length(0.5)
-a.hydraulic_conductivity("2-x")
-a.l_boundary(-1)
-a.r_boundary(1)
-a.leakage_recharge("10")
-a.reference_thickness(10)
-b = a.solve()
-a.draw(b)
