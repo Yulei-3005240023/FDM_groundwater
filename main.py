@@ -1,14 +1,18 @@
 import FDMundergroundwater.onedimensionflow as fo
 from PySide2.QtWidgets import QApplication, QMessageBox
+from PySide2.QtUiTools import QUiLoader
+from PySide2.QtCore import QFile
 
 
-
-def print_hi(name):
-    # 在下面的代码行中使用断点来调试脚本。
-    print(f'Hi, {name}')  # 按 Ctrl+F8 切换断点。
+class MainWindow:
+    def __init__(self):
+        # 从文件中加载ui格式
+        qfile_mainwindow = QFile("ui/MainWindow - untitled.ui")
+        qfile_mainwindow.open(QFile.ReadOnly)
+        qfile_mainwindow.close()
+        self.ui = QUiLoader().load(qfile_mainwindow)
 
 
 # 按间距中的绿色按钮以运行脚本。
 if __name__ == '__main__':
-    print_hi('PyCharm')
     cc = fo.Stableflow()

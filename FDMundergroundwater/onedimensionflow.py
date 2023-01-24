@@ -30,7 +30,7 @@ class Stableflow:
 
     def draw(self, H_ALL):
         # X轴单元格的数目
-        m = int(self.l // self.sl) + 1
+        m = int(self.l / self.sl) + 1
         # X轴
         X = np.linspace(0, self.l, m)
         # 可以plt绘图过程中中文无法显示的问题
@@ -287,9 +287,9 @@ class Confined_aquifer_USF(Unstableflow):
         # 时间轴差分点的数目
         n = int(self.tl / self.st) + 1
 
-        # 对源汇项函数W(x)
+        # 对函数W(x)为源汇项函数除以倒水系数
         def W(x):
-            return eval(self.w)
+            return eval(self.w)/self.T
 
         # 创建一个全部值为0的矩阵，用于存放各个差分位置的水头值
         H_ALL = np.zeros((n, m))
@@ -372,9 +372,9 @@ class Unconfined_aquifer_USF(Unstableflow):
         # 时间轴差分点的数目
         n = int(self.tl / self.st) + 1
 
-        # 对源汇项函数W(x)
+        # 对函数W(x)为源汇项函数除以K,ha
         def W(x):
-            return eval(self.w)
+            return eval(self.w)/(self.K * self.ha)
 
         # 创建一个全部值为0的矩阵，用于存放各个差分位置的水头值
         H_ALL = np.zeros((n, m))

@@ -9,7 +9,7 @@ class Stableflow:
     def __init__(self):
         self.h_b = None
         self.h_t = None
-        self.name_chinese = "稳定一维流"
+        self.name_chinese = "稳定二维流"
         self.xl = None
         self.yl = None
         self.sl = None
@@ -61,6 +61,7 @@ class Confined_aquifer_SF(Stableflow):
 
     def leakage_recharge(self, w: str = "0"):  # 承压含水层越流补给源汇项的设定。
         self.w = w
+
     def solve(self):
         # X,Y轴单元格的数目
         m = int(self.xl / self.sl) + 1
