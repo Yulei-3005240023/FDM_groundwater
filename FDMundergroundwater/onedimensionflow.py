@@ -287,7 +287,7 @@ class Confined_aquifer_USF(Unstableflow):
         # 时间轴差分点的数目
         n = int(self.tl / self.st) + 1
 
-        # 对函数W(x)为源汇项函数除以倒水系数
+        # 对函数W(x)为源汇项函数除以导水系数
         def W(x):
             return eval(self.w)/self.T
 
