@@ -14,11 +14,11 @@ class Stableflow:
         self.h_r = None
         self.h_l = None
 
-    def l_boundary(self, h_l, Dirichlet=True, Neumann=False, Robin=False):  # 左边界 或者潜水含水层对于参考厚度的水头
+    def l_boundary(self, h_l, Dirichlet=True, Neumann=False, Robin=False):  # 左边界 或者潜水含水层相对于参考厚度的水头
         if Dirichlet:
             self.h_l = float(h_l)
 
-    def r_boundary(self, h_r, Dirichlet=True, Neumann=False, Robin=False):  # 右边界 或者潜水含水层对于参考厚度的水头
+    def r_boundary(self, h_r, Dirichlet=True, Neumann=False, Robin=False):  # 右边界 或者潜水含水层相对于参考厚度的水头
         if Dirichlet:
             self.h_r = float(h_r)
 
@@ -87,7 +87,7 @@ class Confined_aquifer_SF(Stableflow):
             return eval(self.w)
 
         # X轴差分点的数目
-        m = int(self.l // self.sl) + 1
+        m = int(self.l / self.sl) + 1
         # 创建一个全部值为0的矩阵，用于存放各个差分位置的水头值
         H_ALL = np.zeros(m)
         # 常数b矩阵w
@@ -95,21 +95,22 @@ class Confined_aquifer_SF(Stableflow):
         # 系数a矩阵
         H_a = np.zeros((m, m))
         for i in range(0, m):  # 对列进行扫描
-            # 源汇项赋值
-            H_b[i] = H_b[i] - W(i * self.sl) * (self.sl * self.sl)
             # 左右边界赋值
             if (i - 1) < 0:
-                H_b[i] = H_b[i] - (T(i * self.sl) - self.sl * (sy.diff(T(x), x).subs(x, i * self.sl))) * self.h_l
-            if (i + 1) == m:
-                H_b[i] = H_b[i] - T(self.l) * self.h_r
-            # 给位置为(i-1)处的水头赋上系数值
-            if (i - 1) >= 0:
+                H_a[i, i] = 1
+                H_b[i] = self.h_l
+            elif (i + 1) == m:
+                H_a[i, i] = 1
+                H_b[i] = self.h_r
+            else:
+                # 源汇项赋值
+                H_b[i] = H_b[i] - W(i * self.sl) * (self.sl * self.sl)
+                # 给位置为(i-1)处的水头赋上系数值
                 H_a[i, (i - 1)] = T(i * self.sl) - (self.sl * sy.diff(T(x), x).subs(x, i * self.sl))
-            # 给位置为(i+1)处的水头赋上系数值
-            if (i + 1) < m:
-                H_a[i, (i + 1)] = T(self.l)
-            # 给位置为(i)处的水头赋上系数值
-            H_a[i, i] = self.sl * sy.diff(T(x), x).subs(x, i * self.sl) - 2 * T(self.l)
+                # 给位置为(i+1)处的水头赋上系数值
+                H_a[i, (i + 1)] = T(i * self.sl)
+                # 给位置为(i)处的水头赋上系数值
+                H_a[i, i] = self.sl * sy.diff(T(x), x).subs(x, i * self.sl) - 2 * T(i * self.sl)
         # 解矩阵方程
         H = nla.solve(H_a, H_b)
         for i in range(0, m):
@@ -146,7 +147,7 @@ class Unconfined_aquifer_SF(Stableflow):
             return eval(self.w)
 
         # X轴差分点的数目
-        m = int(self.l // self.sl) + 1
+        m = int(self.l / self.sl) + 1
         # 创建一个全部值为0的矩阵，用于存放各个差分位置的水头值
         H_ALL = np.zeros(m)
         # 常数b矩阵w
@@ -261,21 +262,22 @@ class Confined_aquifer_USF(Unstableflow):
         self.w = None
         self.a = None
 
-    def transmissivity(self, T: float):  # 承压含水层导水系数的设定
-        self.T = T
+    def transmissivity(self, T):  # 承压含水层导水系数的设定
+        self.T = float(T)
 
-    def storativity(self, S: float):  # 承压含水层储水系数（弹性给水度）的设定
-        self.S = S
+    def storativity(self, S):  # 承压含水层贮水系数（弹性给水度）的设定
+        self.S = float(S)
 
-    def pressure_diffusion_coefficient(self, a: float):  # 承压含水层压力扩散系数的设定，等于导水系数除以贮水系数T/S
-        self.a = a
+    def pressure_diffusion_coefficient(self, a_):  # 承压含水层压力扩散系数的设定，等于导水系数除以贮水系数T/S
+        self.a = float(a_)
 
-    def leakage_recharge(self, w: str = "0"):  # 承压含水层越流补给源汇项的设定。
+    def leakage_recharge(self, w: str = "0"):
+        # 承压含水层越流补给源汇项的设定,承压含水层越流补给源汇项的设定，可以为一个常数也可以为带有前缀为sy.的函数,如sy.sin(x) + sy.cos(t)
         self.w = w
 
     def solve(self):
         # 如果未设定压力扩散系数
-        if self.a is None:
+        if self.a is None or self.a == '':
             self.a = self.T / self.S
         # 对于承压含水层一维非稳定流，定义两个参数 x t
         x = symbols("x")
@@ -288,8 +290,8 @@ class Confined_aquifer_USF(Unstableflow):
         n = int(self.tl / self.st) + 1
 
         # 对函数W(x)为源汇项函数除以导水系数
-        def W(x):
-            return eval(self.w)/self.T
+        def W(x, t):
+            return eval(self.w) / self.T
 
         # 创建一个全部值为0的矩阵，用于存放各个差分位置的水头值
         H_ALL = np.zeros((n, m))
@@ -308,7 +310,7 @@ class Confined_aquifer_USF(Unstableflow):
                         H_b[l_a] = self.ic
                     else:
                         # 源汇项赋值
-                        H_b[l_a] = H_b[l_a] - self.a * (self.sl * self.sl) * self.st * W(i * self.sl)
+                        H_b[l_a] = H_b[l_a] - self.a * (self.sl * self.sl) * self.st * W(i * self.sl, k * self.st)
                         # 左右边界赋值
                         if (i - 1) < 0:
                             H_b[l_a] = H_b[l_a] - (self.a * self.st) * self.h_l
@@ -374,7 +376,7 @@ class Unconfined_aquifer_USF(Unstableflow):
 
         # 对函数W(x)为源汇项函数除以K,ha
         def W(x):
-            return eval(self.w)/(self.K * self.ha)
+            return eval(self.w) / (self.K * self.ha)
 
         # 创建一个全部值为0的矩阵，用于存放各个差分位置的水头值
         H_ALL = np.zeros((n, m))
