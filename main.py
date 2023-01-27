@@ -24,6 +24,10 @@ class MainWindow(QMainWindow):
         self.one_dimension_confined_aquifer_stable_flow_window = cw.One_dimension_confined_aquifer_stable_flow()
         # 实例化具象：承压含水层一维非稳定流
         self.one_dimension_confined_aquifer_unstable_flow_window = cw.One_dimension_confined_aquifer_unstable_flow()
+        # 实例化具象：潜水含水层一维稳定流
+        self.one_dimension_unconfined_aquifer_stable_flow_window = cw.One_dimension_unconfined_aquifer_stable_flow()
+        # 实例化具象，潜水含水层一维非稳定流
+        self.one_dimension_unconfined_aquifer_unstable_flow_window = cw.One_dimension_unconfined_aquifer_unstable_flow()
 
     def next(self):  # 该函数用于打开每一种水流模式所对应的主窗口
         # 获取radioButton的数据
@@ -37,6 +41,12 @@ class MainWindow(QMainWindow):
         if flow_dimension.text() + aquifer_type.text() + stable_status.text() == "一维流承压含水层非稳定流":
             task2 = gevent.spawn(self.one_dimension_confined_aquifer_unstable_flow_window.ui.show())
             task_list.append(task2)  # 把该进程加入到进程列表
+        if flow_dimension.text() + aquifer_type.text() + stable_status.text() == "一维流潜水含水层稳定流":
+            task3 = gevent.spawn(self.one_dimension_unconfined_aquifer_stable_flow_window.ui.show())
+            task_list.append(task3)  # 把该进程加入到进程列表
+        if flow_dimension.text() + aquifer_type.text() + stable_status.text() == "一维流潜水含水层非稳定流":
+            task4 = gevent.spawn(self.one_dimension_unconfined_aquifer_unstable_flow_window.ui.show())
+            task_list.append(task4)  # 把该进程加入到进程列表
 
 
 # 按间距中的绿色按钮以运行脚本。

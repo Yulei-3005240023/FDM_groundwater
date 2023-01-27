@@ -89,14 +89,14 @@ class Confined_aquifer_SF(Stableflow):
         self.S = None
         self.T = None
 
-    def transmissivity(self, T: float):  # 承压含水层导水系数的设定
-        self.T = T
+    def transmissivity(self, T):  # 承压含水层导水系数的设定
+        self.T = float(T)
 
-    def storativity(self, S: float):  # 承压含水层储水系数（弹性给水度）的设定
-        self.S = S
+    def storativity(self, S):  # 承压含水层储水系数（弹性给水度）的设定
+        self.S = float(S)
 
-    def pressure_diffusion_coefficient(self, a: float):  # 承压含水层压力扩散系数的设定，等于导水系数除以贮水系数T/S
-        self.a = a
+    def pressure_diffusion_coefficient(self, a):  # 承压含水层压力扩散系数的设定，等于导水系数除以贮水系数T/S
+        self.a = float(a)
 
     def leakage_recharge(self, w: str = "0"):  # 承压含水层越流补给源汇项的设定，可以设定为x,y的函数。
         self.w = w

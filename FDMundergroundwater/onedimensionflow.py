@@ -2,6 +2,8 @@ import numpy as np
 import sympy as sy
 from sympy import symbols
 import numpy.linalg as nla
+import matplotlib
+matplotlib.use('QtAgg')
 import matplotlib.pyplot as plt
 
 
@@ -125,8 +127,8 @@ class Unconfined_aquifer_SF(Stableflow):
         self.K = None
         self.ha = None
 
-    def reference_thickness(self, ha: float):  # 潜水含水层的参考厚度，使用参考厚度法来简化该方程
-        self.ha = ha
+    def reference_thickness(self, ha):  # 潜水含水层的参考厚度，使用参考厚度法来简化该方程
+        self.ha = float(ha)
 
     def hydraulic_conductivity(self, K: str):  # 潜水含水层渗透系数的设定，可以为一个常数也可以为带有前缀为sy.的函数,如sy.sin(x)
         self.K = K
@@ -161,15 +163,15 @@ class Unconfined_aquifer_SF(Stableflow):
             if (i - 1) < 0:
                 H_b[i] = H_b[i] - (K(i * self.sl) - self.sl * (sy.diff(K(x), x).subs(x, i * self.sl))) * self.h_l
             if (i + 1) == m:
-                H_b[i] = H_b[i] - K(self.l) * self.h_r
+                H_b[i] = H_b[i] - K(i * self.sl) * self.h_r
             # 给位置为(i-1)处的水头赋上系数值
             if (i - 1) >= 0:
                 H_a[i, (i - 1)] = K(i * self.sl) - (self.sl * sy.diff(K(x), x).subs(x, i * self.sl))
             # 给位置为(i+1)处的水头赋上系数值
             if (i + 1) < m:
-                H_a[i, (i + 1)] = K(self.l)
+                H_a[i, (i + 1)] = K(i * self.sl)
             # 给位置为(i)处的水头赋上系数值
-            H_a[i, i] = self.sl * sy.diff(K(x), x).subs(x, i * self.sl) - 2 * K(self.l)
+            H_a[i, i] = self.sl * sy.diff(K(x), x).subs(x, i * self.sl) - 2 * K(i * self.sl)
         # 解矩阵方程
         H = nla.solve(H_a, H_b)
         for i in range(0, m):
@@ -345,24 +347,24 @@ class Unconfined_aquifer_USF(Unstableflow):
         self.a = None
         self.ha = None
 
-    def reference_thickness(self, ha: float):  # 潜水含水层的参考厚度，使用参考厚度法来简化该方程
-        self.ha = ha
+    def reference_thickness(self, ha):  # 潜水含水层的参考厚度，使用参考厚度法来简化该方程
+        self.ha = float(ha)
 
-    def pressure_diffusion_coefficient(self, a: float):  # 潜水含水层压力扩散系数的设定。等于渗透系数乘初始水头常数除给水度Kh0/Sy
-        self.a = a
+    def pressure_diffusion_coefficient(self, a):  # 潜水含水层压力扩散系数的设定。等于渗透系数乘初始水头常数除给水度Kh0/Sy
+        self.a = float(a)
 
     def leakage_recharge(self, w: str):  # 潜水含水层源汇项的设定，可以为一个常数也可以为带有前缀为sy.的函数,如sy.sin(x)
         self.w = w
 
-    def hydraulic_conductivity(self, K: float):  # 潜水含水层渗透系数的设定
-        self.K = K
+    def hydraulic_conductivity(self, K):  # 潜水含水层渗透系数的设定
+        self.K = float(K)
 
-    def storativity(self, Sy: float):  # 潜水含水层储水系数（重力给水度）的设定
-        self.Sy = Sy
+    def storativity(self, Sy):  # 潜水含水层储水系数（重力给水度）的设定
+        self.Sy = float(Sy)
 
     def solve(self):
         # 如果未设定压力扩散系数
-        if self.a is None:
+        if self.a is None or self.a == "":
             self.a = (self.K * self.ha) / self.Sy
         # 对于潜水含水层一维非稳定流，定义两个参数 x t
         x = symbols("x")
