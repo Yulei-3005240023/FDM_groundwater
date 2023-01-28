@@ -29,10 +29,10 @@ VSVersionInfo(
       [
       StringTable(
         u'040904B0',
-        [StringStruct(u'FileDescription', u' Produced by 1005231115 YuLei'),
+        [StringStruct(u'FileDescription', u' 有限差分法模拟地下水含水层水头'),
         StringStruct(u'FileVersion', u'1, 0, 0, 1'),
         StringStruct(u'InternalName', u'Calculate hydraulic head'),
-        StringStruct(u'LegalCopyright', u'Personal'),
+        StringStruct(u'LegalCopyright', u'Personal，Produced by 1005231115 YuLei'),
         StringStruct(u'OriginalFilename', u'FDM head simulate.exe'),
         StringStruct(u'ProductName', u'Hydraulic FDM'),
         StringStruct(u'ProductVersion', u'1.0.0.3')])

@@ -134,7 +134,7 @@ class Unconfined_aquifer_SF(Stableflow):
         self.K = K
 
     def leakage_recharge(self, w: str = "0"):  # 潜水含水层源汇项的设定，可以为一个常数也可以为带有前缀为sy.的函数,如sy.sin(x)
-        self.w = str(w)
+        self.w = w
 
     def solve(self):
         # 对于潜水含水层一维稳定流，定义参数 x
@@ -334,7 +334,7 @@ class Confined_aquifer_USF(Unstableflow):
         H = nla.solve(H_a, H_b)
         for k in range(0, n):  # 对时间进行扫描
             for i in range(0, m):  # 对空间进行扫描
-                H_ALL[k, i] = H[k * n + i]
+                H_ALL[k, i] = H[k * m + i]
         return H_ALL
 
 
@@ -419,5 +419,5 @@ class Unconfined_aquifer_USF(Unstableflow):
         H = nla.solve(H_a, H_b)
         for k in range(0, n):  # 对时间进行扫描
             for i in range(0, m):  # 对空间进行扫描
-                H_ALL[k, i] = float(H[k * n + i] + self.ha)
+                H_ALL[k, i] = float(H[k * m + i] + self.ha)
         return H_ALL
