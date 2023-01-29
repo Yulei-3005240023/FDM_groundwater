@@ -285,10 +285,10 @@ class Unstableflow:
         n = int(self.yl / self.sl) + 1
         # X轴
         X = np.linspace(0, self.xl, m)
-        # 时间轴
-        T = np.linspace(0, self.tl, n)
+        # Y轴
+        Y = np.linspace(0, self.yl, n)
         # 定义初值
-        X, T = np.meshgrid(X, T)
+        X, Y = np.meshgrid(X, Y)
         # 可以plt绘图过程中中文无法显示的问题
         plt.rcParams['font.sans-serif'] = ['SimHei']
         # 解决负号为方块的问题
@@ -313,7 +313,7 @@ class Unstableflow:
             return hz
 
         ax.set_zlim(minH_z(H_ALL), maxH_z(H_ALL))
-        ax.plot_surface(X, T, H_ALL, linewidth=0, antialiased=True, cmap=plt.get_cmap('rainbow'))
+        ax.plot_surface(X, Y, H_ALL, linewidth=0, antialiased=True, cmap=plt.get_cmap('rainbow'))
         plt.title("差分数值解(差分步长%s)" % self.sl)
         plt.show()
 
@@ -321,6 +321,7 @@ class Unstableflow:
 class Confined_aquifer_USF(Unstableflow):
     def __init__(self):
         super().__init__()
+        self.S = None
         self.name_chinese = "承压含水层非稳定二维流"
         self.w = None
         self.T = None
@@ -330,6 +331,9 @@ class Confined_aquifer_USF(Unstableflow):
 
     def leakage_recharge(self, w: str = "0"):  # 承压含水层越流补给源汇项的设定，可以设定为x,y,t的函数。
         self.w = w
+
+    def storativity(self, S):  # 承压含水层贮水系数（弹性给水度）的设定
+        self.S = float(S)
 
     def solve(self):
         # 对于承压含水层二维非稳定流，定义两个参数 x y
@@ -341,69 +345,158 @@ class Confined_aquifer_USF(Unstableflow):
         n = int(self.yl / self.sl) + 1
         p = int(self.tl / self.st) + 1
 
-        # 对函数W(x)为源汇项函数除以倒水系数
+        # 对函数W(x)为源汇项函数除以导水系数
         def W(x, y, t):
             return eval(self.w) / self.T
 
-        # 创建一个全部值为0的矩阵
-        H_ALL = np.zeros((n, m))
+        # 创建一个列表来储存所有时刻的水头值
+        H_all_time = []
         # 常数b矩阵
         H_b = np.zeros((m * n * p, 1))
-        # 系数a矩阵
+        # 系数a矩阵5
         H_a = np.zeros((m * n * p, m * n * p))
         # 系数a矩阵行数
         l_a = 0
-        while l_a < m * n:
+        while l_a < m * n * p:
             for k in range(0, p):  # 对时间进行扫描
                 for i in range(0, n):  # 对行进行扫描
                     for j in range(0, m):  # 对列进行扫描
-                        # 上下左右边界赋值
-                        if (i - 1) < 0:
-                            H_b[l_a] = H_b[l_a] - self.h_t
-                        if (j - 1) < 0:
-                            H_b[l_a] = H_b[l_a] - self.h_l
-                        if (i + 1) == n:
-                            H_b[l_a] = H_b[l_a] - self.h_b
-                        if (j + 1) == m:
-                            H_b[l_a] = H_b[l_a] - self.h_r
-                        # 给位置为(i-1,j)处的水头赋上系数值
-                        if (i - 1) >= 0:
-                            H_a[l_a, (i - 1) * m + j] = 1
-                        # 给位置为(i+1,j)处的水头赋上系数值
-                        if (i + 1) < n:
-                            H_a[l_a, (i + 1) * m + j] = 1
-                        # 给位置为(i,j-1)处的水头赋上系数值
-                        if (j - 1) >= 0:
-                            H_a[l_a, i * m + j - 1] = 1
-                        # 给位置为(i,j+1)处的水头赋上系数值
-                        if (j + 1) < m:
-                            H_a[l_a, i * m + j + 1] = 1
-                        # 给位置为（i,j)处的水头赋上系数值
-                        H_a[l_a, i * m + j] = -4
-                        # 源汇项赋值
-                        H_b[l_a] = H_b[l_a] - W(j * self.sl, i * self.sl)
+                        #  初值设定
+                        if k == 0:
+                            H_a[l_a, l_a] = 1
+                            H_b[l_a] = self.ic
+                        else:
+                            # 上下左右边界赋值
+                            if (i - 1) < 0:
+                                H_b[l_a] = H_b[l_a] - self.h_t
+                            if (j - 1) < 0:
+                                H_b[l_a] = H_b[l_a] - self.h_l
+                            if (i + 1) == n:
+                                H_b[l_a] = H_b[l_a] - self.h_b
+                            if (j + 1) == m:
+                                H_b[l_a] = H_b[l_a] - self.h_r
+                            # 给位置为(i-1,j,k)处的水头赋上系数值
+                            if (i - 1) >= 0:
+                                H_a[l_a, k * n * m + (i - 1) * m + j] = self.st
+                            # 给位置为(i+1,j,k)处的水头赋上系数值
+                            if (i + 1) < n:
+                                H_a[l_a, k * n * m + (i + 1) * m + j] = self.st
+                            # 给位置为(i,j-1,k)处的水头赋上系数值
+                            if (j - 1) >= 0:
+                                H_a[l_a, k * n * m + i * m + j - 1] = self.st
+                            # 给位置为(i,j+1,k)处的水头赋上系数值
+                            if (j + 1) < m:
+                                H_a[l_a, k * n * m + i * m + j + 1] = self.st
+                            # 给位置为(i,j,k)处的水头赋上系数值
+                            H_a[l_a, k * n * m + i * m + j] = -4 * self.st - self.S * self.sl * self.sl / self.T
+                            # 给位置为(i,j,k-1)处的水头赋上系数值
+                            H_a[l_a, (k - 1) * n * m + i * m + j] = self.S * self.sl * self.sl / self.T
+                            # 源汇项赋值
+                            H_b[l_a] = H_b[l_a] - W(j * self.sl, i * self.sl, k * self.st) * self.sl * self.sl * self.st
                         l_a += 1
         # 解矩阵方程
         H = nla.solve(H_a, H_b)
-        for i in range(0, n):  # 对行进行扫描
-            for j in range(0, m):  # 对列进行扫描
-                H_ALL[i, j] = H[i * m + j]
+        print(H)
+        for k in range(0, p):
+            # 创建一个全部值为0的矩阵，用来存放每一个单独时刻的水头值
+            H_ALL = np.zeros((n, m))
+            for i in range(0, n):  # 对行进行扫描
+                for j in range(0, m):  # 对列进行扫描
+                    H_ALL[i, j] = H[k * m * n + i * m + j]
+            H_all_time.append(H_ALL)
 
-        return H_ALL
+        return H_all_time
 
 
-if __name__ == "__main__":
-    a = Unconfined_aquifer_SF()
-    a.x_length(20)
-    a.y_length(10)
-    a.step_length(1)
-    a.hydraulic_conductivity(1)
-    a.reference_thickness(10)
-    a.l_boundary(1)
-    a.r_boundary(1)
-    a.t_boundary(3)
-    a.b_boundary(-1)
-    a.leakage_recharge("0")
-    b = a.solve()
-    print(b)
-    a.draw(b)
+class Unconfined_aquifer_USF(Unstableflow):
+    def __init__(self):
+        super().__init__()
+        self.K = None
+        self.ha = None
+        self.S = None
+        self.name_chinese = "潜水含水层非稳定二维流"
+        self.w = None
+
+    def hydraulic_conductivity(self, K):  # 潜水含水层渗透系数的设定
+        self.K = float(K)
+
+    def reference_thickness(self, ha):  # 潜水含水层的参考厚度，使用参考厚度法来简化该方程
+        self.ha = float(ha)
+
+    def leakage_recharge(self, w: str = "0"):  # 潜水含水层越流补给源汇项的设定，可以设定为x,y,t的函数。
+        self.w = w
+
+    def storativity(self, S):  # 潜水含水层贮水系数（重力给水度）的设定
+        self.S = float(S)
+
+    def solve(self):
+        # 对于承压含水层二维非稳定流，定义两个参数 x y
+        x = sy.symbols("x")
+        y = sy.symbols("y")
+        t = sy.symbols("t")
+        # X,Y,t轴差分点的数目
+        m = int(self.xl / self.sl) + 1
+        n = int(self.yl / self.sl) + 1
+        p = int(self.tl / self.st) + 1
+
+        # 对函数W(x)为源汇项函数除以导水系数
+        def W(x, y, t):
+            return eval(self.w) / (self.K * self.ha)
+
+        # 创建一个列表来储存所有时刻的水头值
+        H_all_time = []
+        # 常数b矩阵
+        H_b = np.zeros((m * n * p, 1))
+        # 系数a矩阵5
+        H_a = np.zeros((m * n * p, m * n * p))
+        # 系数a矩阵行数
+        l_a = 0
+        while l_a < m * n * p:
+            for k in range(0, p):  # 对时间进行扫描
+                for i in range(0, n):  # 对行进行扫描
+                    for j in range(0, m):  # 对列进行扫描
+                        #  初值设定
+                        if k == 0:
+                            H_a[l_a, l_a] = 1
+                            H_b[l_a] = self.ic
+                        else:
+                            # 上下左右边界赋值
+                            if (i - 1) < 0:
+                                H_b[l_a] = H_b[l_a] - self.h_t
+                            if (j - 1) < 0:
+                                H_b[l_a] = H_b[l_a] - self.h_l
+                            if (i + 1) == n:
+                                H_b[l_a] = H_b[l_a] - self.h_b
+                            if (j + 1) == m:
+                                H_b[l_a] = H_b[l_a] - self.h_r
+                            # 给位置为(i-1,j,k)处的水头赋上系数值
+                            if (i - 1) >= 0:
+                                H_a[l_a, k * n * m + (i - 1) * m + j] = self.st
+                            # 给位置为(i+1,j,k)处的水头赋上系数值
+                            if (i + 1) < n:
+                                H_a[l_a, k * n * m + (i + 1) * m + j] = self.st
+                            # 给位置为(i,j-1,k)处的水头赋上系数值
+                            if (j - 1) >= 0:
+                                H_a[l_a, k * n * m + i * m + j - 1] = self.st
+                            # 给位置为(i,j+1,k)处的水头赋上系数值
+                            if (j + 1) < m:
+                                H_a[l_a, k * n * m + i * m + j + 1] = self.st
+                            # 给位置为(i,j,k)处的水头赋上系数值
+                            H_a[l_a, k * n * m + i * m + j] = -4 * self.st - self.S * self.sl * self.sl / (self.K * self.ha)
+                            # 给位置为(i,j,k-1)处的水头赋上系数值
+                            H_a[l_a, (k - 1) * n * m + i * m + j] = self.S * self.sl * self.sl / (self.K * self.ha)
+                            # 源汇项赋值
+                            H_b[l_a] = H_b[l_a] - W(j * self.sl, i * self.sl, k * self.st) * self.sl * self.sl * self.st
+                        l_a += 1
+        # 解矩阵方程
+        H = nla.solve(H_a, H_b)
+        print(H)
+        for k in range(0, p):
+            # 创建一个全部值为0的矩阵，用来存放每一个单独时刻的水头值
+            H_ALL = np.zeros((n, m))
+            for i in range(0, n):  # 对行进行扫描
+                for j in range(0, m):  # 对列进行扫描
+                    H_ALL[i, j] = H[k * m * n + i * m + j] + self.ha
+            H_all_time.append(H_ALL)
+
+        return H_all_time

@@ -3,6 +3,7 @@ import sympy as sy
 from sympy import symbols
 import numpy.linalg as nla
 import matplotlib
+
 matplotlib.use('QtAgg')
 import matplotlib.pyplot as plt
 
