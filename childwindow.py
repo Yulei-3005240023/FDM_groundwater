@@ -1,6 +1,5 @@
 from PySide2.QtWidgets import *
 from PySide2.QtUiTools import QUiLoader
-from PySide2.QtCore import *
 from PySide2.QtGui import *
 import FDMundergroundwater.onedimensionflow as fo
 import FDMundergroundwater.twodimensionsflow as ft
@@ -185,6 +184,127 @@ class Two_dimension_unconfined_aquifer_stable_flow(QMainWindow):
         self.flow.y_length(self.ui.y_length.toPlainText())
         self.flow.reference_thickness(self.ui.reference_thickness.toPlainText())
         self.flow.draw(self.flow.solve())
+
+    def return_main(self):
+        self.ui.close()
+
+
+class Two_dimension_confined_aquifer_unstable_flow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        # 从文件中加载ui格式
+        self.ui = QUiLoader().load("ui/tdcausf.ui")
+        self.ui.setWindowIcon(QIcon("water.ico"))
+        # 监测按钮《计算并绘图》
+        self.ui.draw.clicked.connect(self.flow_draw)
+        # 监测按钮《返回上一级》
+        self.ui.back.clicked.connect(self.return_main)
+        # 监测按钮《上一时刻》
+        self.ui.previous_time.clicked.connect(self.previous_time)
+        # 监测按钮《下一时刻》
+        self.ui.next_time.clicked.connect(self.next_time)
+        # 获取自编库中的类的用法
+        self.flow = ft.Confined_aquifer_USF()
+        # 存储水头解值的列表
+        self.h_all_time = []
+        self.time_location = 0  # 时刻位置
+        self.time_all = 0  # 抛开初始时刻的所有时刻个数
+
+    def flow_draw(self):
+        self.flow.l_boundary(self.ui.l_boundary.toPlainText())
+        self.flow.r_boundary(self.ui.r_boundary.toPlainText())
+        self.flow.t_boundary(self.ui.t_boundary.toPlainText())
+        self.flow.b_boundary(self.ui.b_boundary.toPlainText())
+        self.flow.step_length(self.ui.step_length.toPlainText())
+        self.flow.step_time(self.ui.step_time.toPlainText())
+        self.flow.x_length(self.ui.x_length.toPlainText())
+        self.flow.y_length(self.ui.y_length.toPlainText())
+        self.flow.t_length(self.ui.t_length.toPlainText())
+        self.flow.initial_condition(self.ui.initial_condition.toPlainText())
+        self.flow.storativity(self.ui.storativity.toPlainText())
+        self.flow.transmissivity(self.ui.transmissivity.toPlainText())
+        self.flow.leakage_recharge(self.ui.leakage_recharge.toPlainText())
+        self.h_all_time = self.flow.solve()
+        self.flow.draw(self.h_all_time[0])  # 绘制初始时刻的水头值
+        self.time_all = len(self.h_all_time) - 1
+        self.time_location = 0
+        self.ui.progressBar.reset()
+        self.ui.progressBar.setValue(0)  # 进度条置为0
+
+    def next_time(self):
+        self.time_location += 1
+        self.flow.draw(self.h_all_time[self.time_location])
+        self.ui.progressBar.reset()
+        T = int((self.time_location / self.time_all) * 100)
+        self.ui.progressBar.setValue(T)  # 设置进度条进度
+
+    def previous_time(self):
+        self.time_location -= 1
+        self.flow.draw(self.h_all_time[self.time_location])
+        self.ui.progressBar.reset()
+        T = int((self.time_location / self.time_all) * 100)
+        self.ui.progressBar.setValue(T)  # 设置进度条进度
+
+    def return_main(self):
+        self.ui.close()
+
+
+class Two_dimension_unconfined_aquifer_unstable_flow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        # 从文件中加载ui格式
+        self.ui = QUiLoader().load("ui/tduausf.ui")
+        self.ui.setWindowIcon(QIcon("water.ico"))
+        # 监测按钮《计算并绘图》
+        self.ui.draw.clicked.connect(self.flow_draw)
+        # 监测按钮《返回上一级》
+        self.ui.back.clicked.connect(self.return_main)
+        # 监测按钮《上一时刻》
+        self.ui.previous_time.clicked.connect(self.previous_time)
+        # 监测按钮《下一时刻》
+        self.ui.next_time.clicked.connect(self.next_time)
+        # 获取自编库中的类的用法
+        self.flow = ft.Unconfined_aquifer_USF()
+        # 存储水头解值的列表
+        self.h_all_time = []
+        self.time_location = 0  # 时刻位置
+        self.time_all = 0  # 抛开初始时刻的所有时刻个数
+
+    def flow_draw(self):
+        self.flow.l_boundary(self.ui.l_boundary.toPlainText())
+        self.flow.r_boundary(self.ui.r_boundary.toPlainText())
+        self.flow.t_boundary(self.ui.t_boundary.toPlainText())
+        self.flow.b_boundary(self.ui.b_boundary.toPlainText())
+        self.flow.step_length(self.ui.step_length.toPlainText())
+        self.flow.step_time(self.ui.step_time.toPlainText())
+        self.flow.x_length(self.ui.x_length.toPlainText())
+        self.flow.y_length(self.ui.y_length.toPlainText())
+        self.flow.t_length(self.ui.t_length.toPlainText())
+        self.flow.initial_condition(self.ui.initial_condition.toPlainText())
+        self.flow.storativity(self.ui.storativity.toPlainText())
+        self.flow.hydraulic_conductivity(self.ui.hydraulic_conductivity.toPlainText())
+        self.flow.reference_thickness(self.ui.reference_thickness.toPlainText())
+        self.flow.leakage_recharge(self.ui.leakage_recharge.toPlainText())
+        self.h_all_time = self.flow.solve()
+        self.flow.draw(self.h_all_time[0])  # 绘制初始时刻的水头值
+        self.time_all = len(self.h_all_time) - 1
+        self.time_location = 0
+        self.ui.progressBar.reset()
+        self.ui.progressBar.setValue(0)  # 进度条置为0
+
+    def next_time(self):
+        self.time_location += 1
+        self.flow.draw(self.h_all_time[self.time_location])
+        self.ui.progressBar.reset()
+        T = int((self.time_location / self.time_all) * 100)
+        self.ui.progressBar.setValue(T)  # 设置进度条进度
+
+    def previous_time(self):
+        self.time_location -= 1
+        self.flow.draw(self.h_all_time[self.time_location])
+        self.ui.progressBar.reset()
+        T = int((self.time_location / self.time_all) * 100)
+        self.ui.progressBar.setValue(T)  # 设置进度条进度
 
     def return_main(self):
         self.ui.close()

@@ -318,7 +318,7 @@ class Unstableflow:
         plt.show()
 
 
-class Confined_aquifer_USF(Unstableflow):
+class Confined_aquifer_USF(Unstableflow):  # 承压含水层水流方程
     def __init__(self):
         super().__init__()
         self.S = None
@@ -396,7 +396,6 @@ class Confined_aquifer_USF(Unstableflow):
                         l_a += 1
         # 解矩阵方程
         H = nla.solve(H_a, H_b)
-        print(H)
         for k in range(0, p):
             # 创建一个全部值为0的矩阵，用来存放每一个单独时刻的水头值
             H_ALL = np.zeros((n, m))
@@ -408,12 +407,12 @@ class Confined_aquifer_USF(Unstableflow):
         return H_all_time
 
 
-class Unconfined_aquifer_USF(Unstableflow):
+class Unconfined_aquifer_USF(Unstableflow):  # 潜水Boussinesq方程
     def __init__(self):
         super().__init__()
         self.K = None
         self.ha = None
-        self.S = None
+        self.Sy = None
         self.name_chinese = "潜水含水层非稳定二维流"
         self.w = None
 
@@ -426,11 +425,11 @@ class Unconfined_aquifer_USF(Unstableflow):
     def leakage_recharge(self, w: str = "0"):  # 潜水含水层越流补给源汇项的设定，可以设定为x,y,t的函数。
         self.w = w
 
-    def storativity(self, S):  # 潜水含水层贮水系数（重力给水度）的设定
-        self.S = float(S)
+    def storativity(self, Sy):  # 潜水含水层给水度（重力给水度）的设定
+        self.Sy = float(Sy)
 
     def solve(self):
-        # 对于承压含水层二维非稳定流，定义两个参数 x y
+        # 对于潜水含水层二维非稳定流，定义两个参数 x y
         x = sy.symbols("x")
         y = sy.symbols("y")
         t = sy.symbols("t")
@@ -482,15 +481,15 @@ class Unconfined_aquifer_USF(Unstableflow):
                             if (j + 1) < m:
                                 H_a[l_a, k * n * m + i * m + j + 1] = self.st
                             # 给位置为(i,j,k)处的水头赋上系数值
-                            H_a[l_a, k * n * m + i * m + j] = -4 * self.st - self.S * self.sl * self.sl / (self.K * self.ha)
+                            H_a[l_a, k * n * m + i * m + j] = -4 * self.st - self.Sy * self.sl * self.sl / (self.K *
+                                                                                                            self.ha)
                             # 给位置为(i,j,k-1)处的水头赋上系数值
-                            H_a[l_a, (k - 1) * n * m + i * m + j] = self.S * self.sl * self.sl / (self.K * self.ha)
+                            H_a[l_a, (k - 1) * n * m + i * m + j] = self.Sy * self.sl * self.sl / (self.K * self.ha)
                             # 源汇项赋值
                             H_b[l_a] = H_b[l_a] - W(j * self.sl, i * self.sl, k * self.st) * self.sl * self.sl * self.st
                         l_a += 1
         # 解矩阵方程
         H = nla.solve(H_a, H_b)
-        print(H)
         for k in range(0, p):
             # 创建一个全部值为0的矩阵，用来存放每一个单独时刻的水头值
             H_ALL = np.zeros((n, m))
