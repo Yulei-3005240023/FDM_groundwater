@@ -19,6 +19,7 @@ class MainWindow(QMainWindow):
         self.ui.setWindowIcon(QIcon("water.ico"))
         # 为按钮添加点击动作
         self.ui.pushButton.clicked.connect(self.next)
+        self.ui.toth.clicked.connect(self.toth)
         # 实例化具象：承压含水层一维稳定流
         self.one_dimension_confined_aquifer_stable_flow_window = cw.One_dimension_confined_aquifer_stable_flow()
         # 实例化具象：承压含水层一维非稳定流
@@ -66,6 +67,9 @@ class MainWindow(QMainWindow):
         if flow_dimension.text() + aquifer_type.text() + stable_status.text() == "二维流潜水含水层非稳定流":
             task8 = gevent.spawn(self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.show())
             task_list.append(task8)  # 把该进程加入到进程列表
+
+    def toth(self):
+        return 0
 
 
 # 按间距中的绿色按钮以运行脚本。

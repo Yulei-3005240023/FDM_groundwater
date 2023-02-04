@@ -3,18 +3,24 @@
  <class>one_dimension_confined_aquifer_unstable_flow</class>
  <widget class="QDialog" name="one_dimension_confined_aquifer_unstable_flow">
   <property name="windowModality">
-   <enum>Qt::NonModal</enum>
+   <enum>Qt::WindowModal</enum>
   </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>776</width>
-    <height>580</height>
+    <width>1041</width>
+    <height>806</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>one dimension confined aquifer unstable flow</string>
+  </property>
+  <property name="sizeGripEnabled">
+   <bool>false</bool>
+  </property>
+  <property name="modal">
+   <bool>false</bool>
   </property>
   <widget class="QLabel" name="label">
    <property name="geometry">
@@ -136,24 +142,31 @@
   <widget class="QWidget" name="verticalLayoutWidget">
    <property name="geometry">
     <rect>
-     <x>310</x>
-     <y>500</y>
+     <x>800</x>
+     <y>140</y>
      <width>160</width>
-     <height>80</height>
+     <height>100</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QPushButton" name="draw">
+     <widget class="QPushButton" name="solve">
       <property name="text">
-       <string>计算并绘图</string>
+       <string>计算数值解结果</string>
       </property>
      </widget>
     </item>
     <item>
-     <widget class="QPushButton" name="back">
+     <widget class="QPushButton" name="solve_analytic_solution">
       <property name="text">
-       <string>返回上一级</string>
+       <string>计算解析解结果</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="pushButton">
+      <property name="text">
+       <string>误差比对分析</string>
       </property>
      </widget>
     </item>
@@ -310,6 +323,71 @@
      <widget class="QTextEdit" name="pressure_diffusion_coefficient">
       <property name="placeholderText">
        <string>承压含水层压力扩散系数的设定，等于导水系数除以贮水系数T/S。设定该值则默认为无越流补给，无需填写源汇项，导水系数和贮水系数</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="verticalLayoutWidget_2">
+   <property name="geometry">
+    <rect>
+     <x>800</x>
+     <y>280</y>
+     <width>160</width>
+     <height>80</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout_2">
+    <item>
+     <widget class="QPushButton" name="draw_solve">
+      <property name="text">
+       <string>数值解绘图</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="draw_solve_analytic_solution">
+      <property name="text">
+       <string>解析解绘图</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QPushButton" name="back">
+   <property name="geometry">
+    <rect>
+     <x>800</x>
+     <y>470</y>
+     <width>158</width>
+     <height>28</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>返回上一级</string>
+   </property>
+  </widget>
+  <widget class="QWidget" name="horizontalLayoutWidget_8">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>490</y>
+     <width>371</width>
+     <height>89</height>
+    </rect>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout_8">
+    <item>
+     <widget class="QLabel" name="label_9">
+      <property name="text">
+       <string> 傅里叶级数 </string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QTextEdit" name="fourier_series">
+      <property name="placeholderText">
+       <string>解析解傅里叶级数的取值，级数越大越精确，但是对于计算机的负荷就越大</string>
       </property>
      </widget>
     </item>

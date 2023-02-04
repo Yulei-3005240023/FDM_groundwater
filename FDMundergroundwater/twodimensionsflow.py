@@ -499,3 +499,48 @@ class Unconfined_aquifer_USF(Unstableflow):  # 潜水Boussinesq方程
             H_all_time.append(H_ALL)
 
         return H_all_time
+
+
+class Toth_difficult_baisn:  # Tóth名字里面有非ASCII字符，故给他改个名字
+    def __init__(self):
+        self.H = None
+        self.L = None
+        self.h0 = None
+        # 对于Tóth复杂盆地的多年平均水位方程，定义参数 x,z
+        x = sy.symbols("x")
+        z = sy.symbols("z")
+
+    def baisn_length(self, L):  # 设置盆地宽度
+        self.L = float(L)
+
+    def basin_high(self, H):  # 设置河谷高程
+        self.H = float(H)
+
+    def average_water_level_equation(self, h0: str):  # Tóth复杂盆地的多年平均水位方程
+        # 在Tóth的假设下为x,z的函数，前缀需要带sy.如：z0 + x * sy.tan(sy.pi/3) +sy.pi/3 * sy.sin(2 * sy.pi * x)
+        self.h0 = h0
+
+    def draw_water_level(self):  # 根据多年平均水位方程还绘制水位
+        # 可以plt绘图过程中中文无法显示的问题
+        plt.rcParams['font.sans-serif'] = ['SimHei']
+        # 解决负号为方块的问题
+        plt.rcParams['axes.unicode_minus'] = False
+
+        # 对于多年平均水位方程
+        def H0(x):
+            return eval(self.h0)
+
+        # X轴
+        x = np.linspace(0, self.L, 200)
+        # Z轴
+        Z = H0(x)
+        plt.plot(x, Z, linestyle='-', linewidth=1, antialiased=True)
+        plt.title("Tóth复杂盆地的多年平均水位")
+        plt.show()
+
+
+if __name__ == "__main__":
+    a = Toth_difficult_baisn()
+    a.h0 = '5000 + x * np.tan(np.pi/200) +3 * np.sin((2 * np.pi * x) / 6 * np.cos(np.pi/200))/np.cos(np.pi/200)'
+    a.L = 20000
+    a.draw_water_level()

@@ -6,6 +6,7 @@ import matplotlib
 
 matplotlib.use('QtAgg')
 import matplotlib.pyplot as plt
+from multiprocessing import Process
 
 
 class Stableflow:
@@ -278,7 +279,7 @@ class Confined_aquifer_USF(Unstableflow):
         # 承压含水层越流补给源汇项的设定,承压含水层越流补给源汇项的设定，可以为一个常数也可以为带有前缀为sy.的函数,如sy.sin(x) + sy.cos(t)
         self.w = w
 
-    def solve(self):
+    def solve(self):  # 使用有限差分法对该非稳定流方程进行求解
         # 如果未设定压力扩散系数
         if self.a is None or self.a == '':
             self.a = self.T / self.S
@@ -336,6 +337,40 @@ class Confined_aquifer_USF(Unstableflow):
         for k in range(0, n):  # 对时间进行扫描
             for i in range(0, m):  # 对空间进行扫描
                 H_ALL[k, i] = H[k * m + i]
+        return H_ALL
+
+    def solve_analytic_solution(self, fourier_series=20, cpu_cores=1):  # 默认取傅里叶级数前20项，分配cpu核心为一个
+        def M(x, t):
+            h = (1 - x / self.xl)
+            for i in range(1, fourier_series+1):
+                h -= 2 * np.sin(i * np.pi * x / self.xl) / (i * np.pi) * np.exp(
+                    -(self.a * i * i * np.pi * np.pi) / (self.xl * self.xl) * t)
+            return h
+
+        # X轴差分点的数目
+        m = int(self.xl / self.sl) + 1
+        # = 时间轴差分步长
+        self.st = self.sl * self.tl / self.xl
+        # 时间轴差分点的数目
+        n = int(self.tl / self.st) + 1
+        # X轴
+        X = np.linspace(0, self.xl, m)
+        # 时间轴
+        T = np.linspace(0, self.tl, n)
+        # 创建一个全部值为0的矩阵，用于存放各个与差分位置对等的解析解的水头值
+        H_ALL = np.zeros((n, m))
+        # 解值矩阵
+        H = np.zeros((m * n, 1))
+        # 定义解值b矩阵的行数
+        l = 0
+        while l < m * n:
+            for k in T:
+                for j in X:
+                    H[l] = (self.h_l - self.ic) * M(j, k) + (self.h_r - self.ic) * M(self.xl - j, k)
+                    l += 1
+        for k in range(0, n):  # 对时间进行扫描
+            for i in range(0, m):  # 对空间进行扫描
+                H_ALL[k, i] = H[k * m + i] + self.ic
         return H_ALL
 
 
