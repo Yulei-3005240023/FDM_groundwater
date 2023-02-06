@@ -1,8 +1,4 @@
 import gevent
-from gevent import monkey
-
-# 给程序打补丁使其变成异步模式
-monkey.patch_all()
 from PySide2.QtWidgets import QApplication, QMainWindow
 from PySide2.QtUiTools import QUiLoader
 import childwindow as cw
@@ -45,28 +41,28 @@ class MainWindow(QMainWindow):
         # 水流模式的条件判断
         if flow_dimension.text() + aquifer_type.text() + stable_status.text() == "一维流承压含水层稳定流":
             task1 = gevent.spawn(self.one_dimension_confined_aquifer_stable_flow_window.ui.show())  # 创建多进程任务
-            task_list.append(task1)  # 把该进程加入到进程列表
+            task_list.append(task1)  # 把该任务加入到协程列表
         if flow_dimension.text() + aquifer_type.text() + stable_status.text() == "一维流承压含水层非稳定流":
             task2 = gevent.spawn(self.one_dimension_confined_aquifer_unstable_flow_window.ui.show())
-            task_list.append(task2)  # 把该进程加入到进程列表
+            task_list.append(task2)  # 把该任务加入到协程列表
         if flow_dimension.text() + aquifer_type.text() + stable_status.text() == "一维流潜水含水层稳定流":
             task3 = gevent.spawn(self.one_dimension_unconfined_aquifer_stable_flow_window.ui.show())
-            task_list.append(task3)  # 把该进程加入到进程列表
+            task_list.append(task3)  # 把该任务加入到协程列表
         if flow_dimension.text() + aquifer_type.text() + stable_status.text() == "一维流潜水含水层非稳定流":
             task4 = gevent.spawn(self.one_dimension_unconfined_aquifer_unstable_flow_window.ui.show())
-            task_list.append(task4)  # 把该进程加入到进程列表
+            task_list.append(task4)  # 把该任务加入到协程列表
         if flow_dimension.text() + aquifer_type.text() + stable_status.text() == "二维流承压含水层稳定流":
             task5 = gevent.spawn(self.two_dimension_confined_aquifer_stable_flow_window.ui.show())
-            task_list.append(task5)  # 把该进程加入到进程列表
+            task_list.append(task5)  # 把该任务加入到协程列表
         if flow_dimension.text() + aquifer_type.text() + stable_status.text() == "二维流潜水含水层稳定流":
             task6 = gevent.spawn(self.two_dimension_unconfined_aquifer_stable_flow_window.ui.show())
-            task_list.append(task6)  # 把该进程加入到进程列表
+            task_list.append(task6)  # 把该任务加入到协程列表
         if flow_dimension.text() + aquifer_type.text() + stable_status.text() == "二维流承压含水层非稳定流":
             task7 = gevent.spawn(self.two_dimension_confined_aquifer_unstable_flow_window.ui.show())
-            task_list.append(task7)  # 把该进程加入到进程列表
+            task_list.append(task7)  # 把该任务加入到协程列表
         if flow_dimension.text() + aquifer_type.text() + stable_status.text() == "二维流潜水含水层非稳定流":
             task8 = gevent.spawn(self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.show())
-            task_list.append(task8)  # 把该进程加入到进程列表
+            task_list.append(task8)  # 把该任务加入到协程列表
 
     def toth(self):
         return 0

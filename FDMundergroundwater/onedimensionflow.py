@@ -1,3 +1,4 @@
+from multiprocessing import Process, Manager
 import numpy as np
 import sympy as sy
 from sympy import symbols
@@ -6,7 +7,6 @@ import matplotlib
 
 matplotlib.use('QtAgg')
 import matplotlib.pyplot as plt
-from multiprocessing import Process
 
 
 class Stableflow:
@@ -60,6 +60,7 @@ class Stableflow:
             return hy
 
         ax.set_ylim(minH_y(H_ALL), maxH_y(H_ALL))
+        plt.suptitle(self.name_chinese)
         plt.title("差分数值解(差分步长%s)" % self.sl)
         plt.show()
 
@@ -191,6 +192,7 @@ class Unstableflow:
         self.sl = None
         self.h_r = None
         self.h_l = None
+        tl = self.tl
 
     def l_boundary(self, h_l, Dirichlet=True, Neumann=False, Robin=False):  # 左边界
         if Dirichlet:
@@ -203,8 +205,8 @@ class Unstableflow:
     def step_length(self, sl):  # X轴差分步长
         self.sl = float(sl)
 
-    def step_time(self):  # 时间轴差分步长
-        self.st = self.xl * self.tl / self.sl
+    def step_time(self, st):  # 时间轴差分步长
+        self.st = float(st)
 
     def x_length(self, xl):  # X轴轴长
         self.xl = float(xl)
@@ -215,11 +217,9 @@ class Unstableflow:
     def initial_condition(self, ic):  # 初始条件的水头设定
         self.ic = float(ic)
 
-    def draw(self, H_ALL: np.ndarray):
+    def draw(self, H_ALL: np.ndarray, title=''):
         # X轴单元格的数目
         m = int(self.xl / self.sl) + 1
-        # 时间轴差分步长
-        self.st = self.sl * self.tl / self.xl
         # 时间轴单元格数目
         n = int(self.tl / self.st) + 1
         # X轴
@@ -253,8 +253,39 @@ class Unstableflow:
 
         ax.set_zlim(minH_z(H_ALL), maxH_z(H_ALL))
         ax.plot_surface(X, T, H_ALL, linewidth=0, antialiased=True, cmap=plt.get_cmap('rainbow'))
-        plt.title("差分数值解(差分步长%s)" % self.sl)
+        plt.suptitle(self.name_chinese)
+        if title == '':
+            plt.title("差分数值解(差分步长%s)" % self.sl)
+        else:
+            plt.title(title)
         plt.show()
+
+
+def solve_as(a, xl, sl, n_, t_, h_l, h_r, ic, c, fourier_series, return_dict):  # 该函数用于多核心的傅里叶解析解计算
+    # X轴差分点的数目
+    m = int(xl / sl) + 1
+
+    def M(x, t):
+        h = (1 - x / xl)
+        for i_ in range(1, fourier_series + 1):
+            h -= 2 * np.sin(i_ * np.pi * x / xl) / (i_ * np.pi) * np.exp(
+                -(a * i_ * i_ * np.pi * np.pi) / (xl * xl) * t)
+        return h
+
+    # X轴
+    X = np.linspace(0, xl, m)
+    # 所有解值矩阵
+    H = np.zeros((m * n_, 1))
+    # 定义解值矩阵的行数
+    l = 0
+    while l < m * n_:
+        for k in t_:
+            for j in X:
+                H[l] = (h_l - ic) * M(j, k) + (h_r - ic) * M(xl - j, k)
+                l += 1
+
+    return_dict[c] = H
+    return return_dict
 
 
 class Confined_aquifer_USF(Unstableflow):
@@ -288,8 +319,6 @@ class Confined_aquifer_USF(Unstableflow):
         t = symbols("t")
         # X轴差分点的数目
         m = int(self.xl / self.sl) + 1
-        # = 时间轴差分步长
-        self.st = self.sl * self.tl / self.xl
         # 时间轴差分点的数目
         n = int(self.tl / self.st) + 1
 
@@ -330,7 +359,7 @@ class Confined_aquifer_USF(Unstableflow):
                             H_a[l_a, l_a + 1] = H_a[l_a, l_a + 1] + self.a * self.st
                         # 给位置为(i, k-1)处的水头赋上系数值
                         if (k - 1) >= 0:
-                            H_a[l_a, l_a - n] = H_a[l_a, l_a - n] + self.sl * self.sl
+                            H_a[l_a, l_a - m] = H_a[l_a, l_a - m] + self.sl * self.sl
                     l_a += 1
         # 解矩阵方程
         H = nla.solve(H_a, H_b)
@@ -339,34 +368,83 @@ class Confined_aquifer_USF(Unstableflow):
                 H_ALL[k, i] = H[k * m + i]
         return H_ALL
 
-    def solve_analytic_solution(self, fourier_series=20, cpu_cores=1):  # 默认取傅里叶级数前20项，分配cpu核心为一个
-        def M(x, t):
-            h = (1 - x / self.xl)
-            for i in range(1, fourier_series+1):
-                h -= 2 * np.sin(i * np.pi * x / self.xl) / (i * np.pi) * np.exp(
-                    -(self.a * i * i * np.pi * np.pi) / (self.xl * self.xl) * t)
-            return h
-
+    def solve_analytic_solution(self, fourier_series=20):  # 默认取傅里叶级数前20项，
+        # 如果未设定压力扩散系数
+        if self.a is None or self.a == '':
+            self.a = self.T / self.S
         # X轴差分点的数目
         m = int(self.xl / self.sl) + 1
-        # = 时间轴差分步长
-        self.st = self.sl * self.tl / self.xl
         # 时间轴差分点的数目
         n = int(self.tl / self.st) + 1
+
+        def M(x, t):
+            h = (1 - x / self.xl)
+            for i_ in range(1, fourier_series + 1):
+                h -= 2 * np.sin(i_ * np.pi * x / self.xl) / (i_ * np.pi) * np.exp(
+                    -(self.a * i_ * i_ * np.pi * np.pi) / (self.xl * self.xl) * t)
+            return h
+
         # X轴
         X = np.linspace(0, self.xl, m)
-        # 时间轴
+        # T轴
         T = np.linspace(0, self.tl, n)
         # 创建一个全部值为0的矩阵，用于存放各个与差分位置对等的解析解的水头值
         H_ALL = np.zeros((n, m))
-        # 解值矩阵
+        # 所有解值矩阵
         H = np.zeros((m * n, 1))
-        # 定义解值b矩阵的行数
+        # 定义解值矩阵的行数
         l = 0
         while l < m * n:
             for k in T:
                 for j in X:
                     H[l] = (self.h_l - self.ic) * M(j, k) + (self.h_r - self.ic) * M(self.xl - j, k)
+                    l += 1
+
+        for k in range(0, n):  # 对时间进行扫描
+            for i in range(0, m):  # 对空间进行扫描
+                H_ALL[k, i] = H[k * m + i] + self.ic
+        return H_ALL
+
+    def solve_multi(self, cpu_cores=2, fourier_series=20):  # 默认取傅里叶级数前20项，
+        # 如果未设定压力扩散系数
+        if self.a is None or self.a == '':
+            self.a = self.T / self.S
+        # X轴差分点的数目
+        m = int(self.xl / self.sl) + 1
+        # 时间轴差分点的数目
+        n = int(self.tl / self.st) + 1
+        # 分配到每一个cpu上的数目
+        n_ = n // cpu_cores
+        # 创建一个全部值为0的矩阵，用于存放各个与差分位置对等的解析解的水头值
+        H_ALL = np.zeros((n, m))
+        # 所有解值矩阵
+        H = np.zeros((m * n, 1))
+        # 创建类似字典的跨进程共享对象
+        manager = Manager()
+        return_dict = manager.dict()
+        # 创建多进程工作列表
+        plist = []
+        # 多进程任务分配
+        for c in range(0, cpu_cores):
+            # 时间轴（以拆分）
+            if c != (cpu_cores - 1):
+                t_ = np.linspace(c * n_ * self.st, (c + 1) * (n_ - 1) * self.st, n_)
+            else:
+                t_ = np.linspace((c * n_) * self.st, self.tl, n - c * n_)
+                n_ = n - c * n_
+            p = Process(target=solve_as, args=(
+                self.a, self.xl, self.sl, n_, t_, self.h_l, self.h_r, self.ic, c, fourier_series, return_dict))
+            p.start()
+            plist.append(p)
+
+        # 多进程运算开始
+        for p in plist:
+            p.join()
+        l = 0
+        while l < m * n:
+            for c in range(0, cpu_cores):
+                for h in return_dict[c]:
+                    H[l] = h
                     l += 1
         for k in range(0, n):  # 对时间进行扫描
             for i in range(0, m):  # 对空间进行扫描
@@ -449,11 +527,11 @@ class Unconfined_aquifer_USF(Unstableflow):
                             H_a[l_a, l_a + 1] = H_a[l_a, l_a + 1] + self.a * self.st
                         # 给位置为(i, k-1)处的水头赋上系数值
                         if (k - 1) >= 0:
-                            H_a[l_a, l_a - n] = H_a[l_a, l_a - n] + self.sl * self.sl
+                            H_a[l_a, l_a - m] = H_a[l_a, l_a - m] + self.sl * self.sl
                     l_a += 1
         # 解矩阵方程
         H = nla.solve(H_a, H_b)
         for k in range(0, n):  # 对时间进行扫描
             for i in range(0, m):  # 对空间进行扫描
-                H_ALL[k, i] = float(H[k * m + i] + self.ha)
+                H_ALL[k, i] = H[k * m + i] + self.ha
         return H_ALL

@@ -79,6 +79,7 @@ class Stableflow:
 
         ax.set_zlim(minH_z(H_ALL), maxH_z(H_ALL))
         ax.plot_surface(X, Y, H_ALL, linewidth=0, antialiased=True, cmap=plt.get_cmap('rainbow'))
+        plt.suptitle(self.name_chinese)
         plt.title("差分数值解(差分步长%s)" % self.sl)
         plt.show()
 
@@ -314,6 +315,7 @@ class Unstableflow:
 
         ax.set_zlim(minH_z(H_ALL), maxH_z(H_ALL))
         ax.plot_surface(X, Y, H_ALL, linewidth=0, antialiased=True, cmap=plt.get_cmap('rainbow'))
+        plt.suptitle(self.name_chinese)
         plt.title("差分数值解(差分步长%s)" % self.sl)
         plt.show()
 
