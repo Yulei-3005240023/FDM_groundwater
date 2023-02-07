@@ -347,19 +347,6 @@
     </item>
    </layout>
   </widget>
-  <widget class="QPushButton" name="back">
-   <property name="geometry">
-    <rect>
-     <x>820</x>
-     <y>370</y>
-     <width>158</width>
-     <height>28</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>返回上一级</string>
-   </property>
-  </widget>
   <widget class="QWidget" name="horizontalLayoutWidget_8">
    <property name="geometry">
     <rect>
@@ -497,7 +484,7 @@ p, li { white-space: pre-wrap; }
      </widget>
     </item>
     <item>
-     <widget class="QPushButton" name="pushButton">
+     <widget class="QPushButton" name="draw_error">
       <property name="text">
        <string>绘制误差表面图</string>
       </property>
@@ -554,6 +541,32 @@ p, li { white-space: pre-wrap; }
      <widget class="QLabel" name="label_15">
       <property name="text">
        <string>一个核心</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="verticalLayoutWidget_5">
+   <property name="geometry">
+    <rect>
+     <x>820</x>
+     <y>360</y>
+     <width>160</width>
+     <height>80</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout_5">
+    <item>
+     <widget class="QPushButton" name="save_date">
+      <property name="text">
+       <string>保存日志</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="back">
+      <property name="text">
+       <string>返回上一级</string>
       </property>
      </widget>
     </item>

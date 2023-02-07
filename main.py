@@ -73,8 +73,7 @@ if __name__ == '__main__':
     # QCoreApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
     app = QApplication()
     window = MainWindow()
-
-    task_list = []  # 创建多进程列表
+    task_list = []  # 创建协程列表
     task0 = gevent.spawn(window.ui.show())
     task_list.append(task0)
     gevent.joinall(task_list)

@@ -255,7 +255,7 @@ class Unstableflow:
         ax.plot_surface(X, T, H_ALL, linewidth=0, antialiased=True, cmap=plt.get_cmap('rainbow'))
         plt.suptitle(self.name_chinese)
         if title == '':
-            plt.title("差分数值解(差分步长%s)" % self.sl)
+            plt.title("差分数值解(差分空间步长{0}，时间步长{1})".format(self.sl, self.st))
         else:
             plt.title(title)
         plt.show()
@@ -368,7 +368,7 @@ class Confined_aquifer_USF(Unstableflow):
                 H_ALL[k, i] = H[k * m + i]
         return H_ALL
 
-    def solve_analytic_solution(self, fourier_series=20):  # 默认取傅里叶级数前20项，
+    def solve_analytic_solution(self, fourier_series=20):  # 默认取傅里叶级数前20项，单进程运行函数
         # 如果未设定压力扩散系数
         if self.a is None or self.a == '':
             self.a = self.T / self.S
@@ -405,7 +405,7 @@ class Confined_aquifer_USF(Unstableflow):
                 H_ALL[k, i] = H[k * m + i] + self.ic
         return H_ALL
 
-    def solve_multi(self, cpu_cores=2, fourier_series=20):  # 默认取傅里叶级数前20项，
+    def solve_multi(self, cpu_cores=2, fourier_series=20):  # 默认取傅里叶级数前20项，CPU运算核心为两个，多核运行选择
         # 如果未设定压力扩散系数
         if self.a is None or self.a == '':
             self.a = self.T / self.S
