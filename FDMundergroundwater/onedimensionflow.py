@@ -261,7 +261,7 @@ class Unstableflow:
         plt.show()
 
 
-def solve_as(a, xl, sl, n_, t_, h_l, h_r, ic, c, fourier_series, return_dict):  # 该函数用于多核心的傅里叶解析解计算
+def solve_as(a, xl, sl, n_, t_, h_l, h_r, ic, c, T, w, fourier_series, return_dict):  # 该函数用于多核心的傅里叶解析解计算
     # X轴差分点的数目
     m = int(xl / sl) + 1
 
@@ -270,6 +270,13 @@ def solve_as(a, xl, sl, n_, t_, h_l, h_r, ic, c, fourier_series, return_dict):  
         for i_ in range(1, fourier_series + 1):
             h -= 2 * np.sin(i_ * np.pi * x / xl) / (i_ * np.pi) * np.exp(
                 -(a * i_ * i_ * np.pi * np.pi) / (xl * xl) * t)
+        return h
+
+    def N(x):
+        if T == 0:
+            return 0
+        else:
+            h = -1 * (float(w) / (2 * T)) * x * x + ((h_r - h_l) / xl + float(w) * xl / (2 * T)) * x + h_l
         return h
 
     # X轴
@@ -281,7 +288,7 @@ def solve_as(a, xl, sl, n_, t_, h_l, h_r, ic, c, fourier_series, return_dict):  
     while l < m * n_:
         for k in t_:
             for j in X:
-                H[l] = (h_l - ic) * M(j, k) + (h_r - ic) * M(xl - j, k)
+                H[l] = (h_l - ic) * M(j, k) + (h_r - ic) * M(xl - j, k)  # + N(j)
                 l += 1
 
     return_dict[c] = H
@@ -307,7 +314,7 @@ class Confined_aquifer_USF(Unstableflow):
         self.a = float(a_)
 
     def leakage_recharge(self, w: str = "0"):
-        # 承压含水层越流补给源汇项的设定,承压含水层越流补给源汇项的设定，可以为一个常数也可以为带有前缀为sy.的函数,如sy.sin(x) + sy.cos(t)
+        # 承压含水层越流补给源汇项的设定,承压含水层越流补给源汇项的设定，在解析解的条件下为一个常数，在数值解的条件下也可以为带有前缀为sy.的函数,如sy.sin(x) + sy.cos(t)
         self.w = w
 
     def solve(self):  # 使用有限差分法对该非稳定流方程进行求解
@@ -384,6 +391,12 @@ class Confined_aquifer_USF(Unstableflow):
                     -(self.a * i_ * i_ * np.pi * np.pi) / (self.xl * self.xl) * t)
             return h
 
+        def N(x):
+            h = -1 * float(self.w) / (2 * self.T) * x * x + (
+                        ((self.h_r - self.ic) - (self.h_l - self.ic)) / self.xl + float(self.w) * self.xl / (
+                            2 * self.T)) * x + self.h_l - self.ic
+            return h
+
         # X轴
         X = np.linspace(0, self.xl, m)
         # T轴
@@ -397,7 +410,7 @@ class Confined_aquifer_USF(Unstableflow):
         while l < m * n:
             for k in T:
                 for j in X:
-                    H[l] = (self.h_l - self.ic) * M(j, k) + (self.h_r - self.ic) * M(self.xl - j, k)
+                    H[l] = (self.h_l - self.ic) * M(j, k) + (self.h_r - self.ic) * M(self.xl - j, k) #+ N(j)
                     l += 1
 
         for k in range(0, n):  # 对时间进行扫描
@@ -433,7 +446,8 @@ class Confined_aquifer_USF(Unstableflow):
                 t_ = np.linspace((c * n_) * self.st, self.tl, n - c * n_)
                 n_ = n - c * n_
             p = Process(target=solve_as, args=(
-                self.a, self.xl, self.sl, n_, t_, self.h_l, self.h_r, self.ic, c, fourier_series, return_dict))
+                self.a, self.xl, self.sl, n_, t_, self.h_l, self.h_r, self.ic, c, self.T, self.w, fourier_series,
+                return_dict))
             p.start()
             plist.append(p)
 

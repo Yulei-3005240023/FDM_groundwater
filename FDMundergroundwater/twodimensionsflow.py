@@ -512,14 +512,14 @@ class Toth_difficult_baisn:  # Tóth名字里面有非ASCII字符，故给他改
         x = sy.symbols("x")
         z = sy.symbols("z")
 
-    def baisn_length(self, L):  # 设置盆地宽度
+    def basin_length(self, L):  # 设置盆地宽度
         self.L = float(L)
 
     def basin_high(self, H):  # 设置河谷高程
         self.H = float(H)
 
     def average_water_level_equation(self, h0: str):  # Tóth复杂盆地的多年平均水位方程
-        # 在Tóth的假设下为x,z的函数，前缀需要带sy.如：z0 + x * sy.tan(sy.pi/3) +sy.pi/3 * sy.sin(2 * sy.pi * x)
+        # 在Tóth的假设下为x,z的函数，前缀需要带np.如：z0 + x * np.tan(sy.pi/3) +np.pi/3 * np.sin(2 * np.pi * x)
         self.h0 = h0
 
     def draw_water_level(self):  # 根据多年平均水位方程还绘制水位

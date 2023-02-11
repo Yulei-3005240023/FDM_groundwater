@@ -4,6 +4,7 @@ from PySide2.QtUiTools import QUiLoader
 import childwindow as cw
 from PySide2.QtGui import QIcon
 import sys
+import multiprocessing
 
 
 class MainWindow(QMainWindow):
@@ -32,6 +33,8 @@ class MainWindow(QMainWindow):
         self.two_dimension_confined_aquifer_unstable_flow_window = cw.Two_dimension_confined_aquifer_unstable_flow()
         # 实例化具象：潜水含水层二维非稳定流
         self.two_dimension_unconfined_aquifer_unstable_flow_window = cw.Two_dimension_unconfined_aquifer_unstable_flow()
+        # 实例化具象：Tóth复杂盆地
+        self.toth_difficult_basin_window = cw.Two_dimension_Toth_difficult_baisn()
 
     def next(self):  # 该函数用于打开每一种水流模式所对应的主窗口
         # 获取radioButton的数据
@@ -64,13 +67,15 @@ class MainWindow(QMainWindow):
             task8 = gevent.spawn(self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.show())
             task_list.append(task8)  # 把该任务加入到协程列表
 
-    def toth(self):
-        return 0
+    def toth(self):  # 进入Tóth复杂盆地的部分
+        task9 = gevent.spawn(self.toth_difficult_basin_window.ui.show())
+        task_list.append(task9)  # 把该任务加入到协程列表
 
 
 # 按间距中的绿色按钮以运行脚本。
 if __name__ == '__main__':
     # QCoreApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+    multiprocessing.freeze_support()  # 预防多进程打包出错
     app = QApplication()
     window = MainWindow()
     task_list = []  # 创建协程列表

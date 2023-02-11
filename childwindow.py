@@ -5,6 +5,8 @@ import FDMundergroundwater.onedimensionflow as fo
 import FDMundergroundwater.twodimensionsflow as ft
 import time
 import numpy as np
+import threading
+import openpyxl
 
 
 class One_dimension_confined_aquifer_stable_flow(QMainWindow):
@@ -55,6 +57,8 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
         self.relative_step_length = None
         # 时间相对差分步长
         self.relative_step_time = None
+        # 压力扩散系数
+        self.pressure_diffusion_coefficient = None
         # 监测按钮《计算数值解》
         self.ui.solve.clicked.connect(self.solve)
         # 监测按钮《计算解析解》
@@ -75,8 +79,14 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
         self.flow = fo.Confined_aquifer_USF()
         # 获取当前系统时间戳
         t = time.localtime()
-        self.ui.textBrowser.append('程序运行时间（北京时间）：')
-        self.ui.textBrowser.append(str(time.strftime("%Y-%m-%d %H:%M:%S", t)))
+        # 日志时间
+        self.time = str(time.strftime("%Y-%m-%d_%H时%M分%S秒", t))
+        self.ui.textBrowser.append('程序运行时间（北京时间）：' + str(time.strftime("%Y-%m-%d %H:%M:%S", t)))
+        self.ui.textBrowser.append(self.time)
+        wb = openpyxl.Workbook()
+        ws1 = wb.create_sheet('info', 0)
+        ws1.append(['x轴轴长', '空间差分步长', '相对空间差分步长', 't轴轴长', '时间差分步长', '相对时间差分步长', '左边界', '右边界', '初始条件', '压力扩散系数', '傅里叶级数', '相对误差'])
+        wb.save('缓存/' + self.time + 'data.xlsx')
 
     def solve(self):
         self.flow.l_boundary(self.ui.l_boundary.toPlainText())
@@ -89,6 +99,8 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
         # 相对空间差分步长和相对时间差分步长的设定
         self.relative_step_length = self.flow.sl / self.flow.xl
         self.relative_step_time = self.flow.st / self.flow.tl
+        # 压力扩散系数的设定
+        self.pressure_diffusion_coefficient = self.ui.pressure_diffusion_coefficient.toPlainText()
         # 判断填写的是压力模量系数还是导水系数和贮水系数
         if self.ui.pressure_diffusion_coefficient.toPlainText() == '':
             self.flow.storativity(self.ui.storativity.toPlainText())
@@ -103,7 +115,10 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
         self.ui.textBrowser.append(str(time.strftime("%H:%M:%S", t)))
         self.ui.textBrowser.append('正在进行数值解求解')
         self.ui.textBrowser.append(
-            '相对空间差分步长：' + str(self.relative_step_length) + ' 相对时间差分步长：' + str(self.relative_step_time))
+            '相对空间差分步长：' + str(self.relative_step_length) + '相对时间差分步长：' + str(self.relative_step_time))
+        self.ui.textBrowser.append(
+            '空间差分步长：' + str(self.flow.sl) + ' 时间差分步长：' + str(self.flow.st))
+        self.ui.textBrowser.append('压力扩散系数:' + self.pressure_diffusion_coefficient)
         start_time = time.perf_counter()
         self.solve_fdm = self.flow.solve()
         end_time = time.perf_counter()
@@ -111,6 +126,11 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
 
     def draw_solve(self):
         self.flow.draw(self.solve_fdm)
+
+    def solve_analytic_solution_threading(self):
+        new_thread = threading.Thread(target=self.solve_analytic_solution())
+        new_thread.start()
+        new_thread.join()
 
     def solve_analytic_solution(self):
         self.flow.l_boundary(self.ui.l_boundary.toPlainText())
@@ -125,6 +145,8 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
         # 相对空间差分步长和相对时间差分步长的设定
         self.relative_step_length = self.flow.sl / self.flow.xl
         self.relative_step_time = self.flow.st / self.flow.tl
+        # 压力扩散系数的设定
+        self.pressure_diffusion_coefficient = self.ui.pressure_diffusion_coefficient.toPlainText()
         # 判断填写的是压力模量系数还是导水系数和贮水系数
         if self.ui.pressure_diffusion_coefficient.toPlainText() == '':
             self.flow.storativity(self.ui.storativity.toPlainText())
@@ -138,12 +160,14 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
         t = time.localtime()
         self.ui.textBrowser.append(str(time.strftime("%H:%M:%S", t)))
         self.ui.textBrowser.append('正在进行解析解求解')
-        self.ui.textBrowser.append('')
         self.ui.textBrowser.append(
             '傅里叶级数解（傅里叶级数取前' + str(self.fourier_series) + '项)，' + '分配CPU核心' + str(
                 self.cpu_cores) + '个')
         self.ui.textBrowser.append(
-            '相对空间差分步长：' + str(self.relative_step_length) + ' 相对时间差分步长：' + str(self.relative_step_time))
+            '相对空间差分步长：' + str(self.relative_step_length) + '相对时间差分步长：' + str(self.relative_step_time))
+        self.ui.textBrowser.append(
+            '空间差分步长：' + str(self.flow.sl) + ' 时间差分步长：' + str(self.flow.st))
+        self.ui.textBrowser.append('压力扩散系数:' + self.pressure_diffusion_coefficient)
         start_time = time.perf_counter()
         self.solve_as = self.flow.solve_multi(fourier_series=self.fourier_series, cpu_cores=self.cpu_cores)
         end_time = time.perf_counter()
@@ -175,6 +199,11 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
         t = time.localtime()
         self.ui.textBrowser.append(str(time.strftime("%H:%M:%S", t)))
         self.ui.textBrowser.append('误差分析完毕，相对误差:' + str(self.relative_error * 100) + '%')
+        self.ui.textBrowser.append('----------------')
+        wb = openpyxl.load_workbook('缓存/' + self.time + 'data.xlsx')
+        ws = wb['info']
+        ws.append([self.flow.xl, self.flow.sl, self.relative_step_length, self.flow.tl, self.flow.st, self.relative_step_time, self.flow.h_l, self.flow.h_r, self.flow.ic, self.pressure_diffusion_coefficient, self.fourier_series, self.relative_error])
+        wb.save('缓存/' + self.time + 'data.xlsx')
 
     def draw_error(self):
         self.flow.draw(self.error, title='绝对误差表面图')
@@ -184,9 +213,13 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
         t = time.localtime()
         filepath = QFileDialog.getExistingDirectory(self.ui, "选择文件存储路径")
         f_ = filepath + '/日志' + str(time.strftime("%Y-%m-%d_%H时%M分%S秒", t)) + '.txt'
+        f_xlsx = filepath + '/日志' + str(time.strftime("%Y-%m-%d_%H时%M分%S秒", t)) + '.xlsx'
         file = open(f_, 'w')
         file.write(self.ui.textBrowser.toPlainText())
         file.close()
+        wb = openpyxl.load_workbook('缓存/' + self.time + 'data.xlsx')
+        wb.save(f_xlsx)
+        self.ui.textBrowser.append('日志已保存')
 
 
 class One_dimension_unconfined_aquifer_stable_flow(QMainWindow):
@@ -428,6 +461,29 @@ class Two_dimension_unconfined_aquifer_unstable_flow(QMainWindow):
         self.ui.progressBar.reset()
         T = int((self.time_location / self.time_all) * 100)
         self.ui.progressBar.setValue(T)  # 设置进度条进度
+
+    def return_main(self):
+        self.ui.close()
+
+
+class Two_dimension_Toth_difficult_baisn(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        # 从文件中加载ui格式
+        self.ui = QUiLoader().load("ui/toth.ui")
+        self.ui.setWindowIcon(QIcon("water.ico"))
+        # 监测按钮《多年平均水位绘图》
+        self.ui.draw.clicked.connect(self.flow_draw)
+        # 监测按钮《返回上一级》
+        self.ui.back.clicked.connect(self.return_main)
+        # 获取自编库中的类的用法
+        self.flow = ft.Toth_difficult_baisn()
+
+    def flow_draw(self):
+        self.flow.basin_length(self.ui.basin_length.toPlainText())
+        self.flow.basin_high(self.ui.basin_high.toPlainText())
+        self.flow.average_water_level_equation(self.ui.average_water_level_equation.toPlainText())
+        self.flow.draw_water_level()
 
     def return_main(self):
         self.ui.close()
