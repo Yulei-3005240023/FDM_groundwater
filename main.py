@@ -75,7 +75,7 @@ class MainWindow(QMainWindow):
 # 按间距中的绿色按钮以运行脚本。
 if __name__ == '__main__':
     # QCoreApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
-    multiprocessing.freeze_support()  # 预防多进程打包出错
+    multiprocessing.freeze_support()  # 预防多进程打包后运行出错
     app = QApplication()
     window = MainWindow()
     task_list = []  # 创建协程列表

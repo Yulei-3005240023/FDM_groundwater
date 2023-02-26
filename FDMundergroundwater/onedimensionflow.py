@@ -8,6 +8,15 @@ import matplotlib
 matplotlib.use('QtAgg')
 import matplotlib.pyplot as plt
 
+from ctypes import cdll, c_double, c_int
+
+# 加载动态链接库
+lib = cdll.LoadLibrary('F:\PythonProject\FDM_undergroundwater\FDMundergroundwater\jishu.so')  # 将my_library.so替换为您的动态链接库文件名
+
+# 给定函数参数类型
+lib.M.argtypes = [c_double, c_double, c_double, c_double, c_int]
+lib.M.restype = c_double
+
 
 class Stableflow:
 
@@ -217,7 +226,42 @@ class Unstableflow:
     def initial_condition(self, ic):  # 初始条件的水头设定
         self.ic = float(ic)
 
-    def draw(self, H_ALL: np.ndarray, title=''):
+    def draw(self, H_ALL: np.ndarray, time=0, title=''):  # 按给定的时刻绘制水头曲线
+        # X轴单元格的数目
+        m = int(self.xl / self.sl) + 1
+        # X轴
+        X = np.linspace(0, self.xl, m)
+        # 可以plt绘图过程中中文无法显示的问题
+        plt.rcParams['font.sans-serif'] = ['SimHei']
+        # 解决负号为方块的问题
+        plt.rcParams['axes.unicode_minus'] = False
+        fig = plt.figure(figsize=(10, 7))
+        ax = fig.add_subplot()
+        ax.plot(X, H_ALL[time], linewidth=1, antialiased=True)
+
+        def maxH_y(h_all):
+            hy = 0
+            for i in h_all:
+                if i > hy:
+                    hy = i
+            return hy
+
+        def minH_y(h_all):
+            hy = 0
+            for i in h_all:
+                if i < hy:
+                    hy = i
+            return hy
+
+        ax.set_ylim(minH_y(H_ALL[time]), maxH_y(H_ALL[time]))
+        plt.suptitle(self.name_chinese)
+        if title == '':
+            plt.title("差分数值解，当前为第{0}时刻(差分空间步长{1}，时间步长{2})".format(time, self.sl, self.st))
+        else:
+            plt.title(title)
+        plt.show()
+
+    def draw_surface(self, H_ALL: np.ndarray, title=''):  # 绘制表面图
         # X轴单元格的数目
         m = int(self.xl / self.sl) + 1
         # 时间轴单元格数目
@@ -288,7 +332,8 @@ def solve_as(a, xl, sl, n_, t_, h_l, h_r, ic, c, T, w, fourier_series, return_di
     while l < m * n_:
         for k in t_:
             for j in X:
-                H[l] = (h_l - ic) * M(j, k) + (h_r - ic) * M(xl - j, k)  # + N(j)
+                H[l] = (h_l - ic) * lib.M(a, j, k, xl, fourier_series) + (h_r - ic) * lib.M(a, xl - j, k, xl,
+                                                                                            fourier_series)  # M(xl - j, k)  # + N(j)
                 l += 1
 
     return_dict[c] = H
@@ -348,14 +393,17 @@ class Confined_aquifer_USF(Unstableflow):
                     if k == 0:
                         H_a[l_a, l_a] = 1
                         H_b[l_a] = self.ic
+                    # 左右边界赋值
+                    elif (i - 1) < 0:
+                        H_a[l_a, l_a] = 1
+                        H_b[l_a] = self.h_l
+                    elif (i + 1) == m:
+                        H_a[l_a, l_a] = 1
+                        H_b[l_a] = self.h_r
                     else:
                         # 源汇项赋值
                         H_b[l_a] = H_b[l_a] - self.a * (self.sl * self.sl) * self.st * W(i * self.sl, k * self.st)
-                        # 左右边界赋值
-                        if (i - 1) < 0:
-                            H_b[l_a] = H_b[l_a] - (self.a * self.st) * self.h_l
-                        if (i + 1) == m:
-                            H_b[l_a] = H_b[l_a] - self.a * self.st * self.h_r
+
                         # 给位置为(i, k)处的水头赋上系数值
                         H_a[l_a, l_a] = H_a[l_a, l_a] - 2 * self.a * self.st - self.sl * self.sl
                         # 给位置为(i-1，k)处的水头赋上系数值
@@ -367,6 +415,72 @@ class Confined_aquifer_USF(Unstableflow):
                         # 给位置为(i, k-1)处的水头赋上系数值
                         if (k - 1) >= 0:
                             H_a[l_a, l_a - m] = H_a[l_a, l_a - m] + self.sl * self.sl
+                    l_a += 1
+        # 解矩阵方程
+        H = nla.solve(H_a, H_b)
+        for k in range(0, n):  # 对时间进行扫描
+            for i in range(0, m):  # 对空间进行扫描
+                H_ALL[k, i] = H[k * m + i]
+        return H_ALL
+
+    def solve_cn(self):  # 使用有限差分法对该非稳定流方程进行求解
+        # 如果未设定压力扩散系数
+        if self.a is None or self.a == '':
+            self.a = self.T / self.S
+        # 对于承压含水层一维非稳定流，定义两个参数 x t
+        x = symbols("x")
+        t = symbols("t")
+        # X轴差分点的数目
+        m = int(self.xl / self.sl) + 1
+        # 时间轴差分点的数目
+        n = int(self.tl / self.st) + 1
+
+        # 对函数W(x)为源汇项函数除以导水系数
+        def W(x, t):
+            return eval(self.w) / self.T
+
+        # 创建一个全部值为0的矩阵，用于存放各个差分位置的水头值
+        H_ALL = np.zeros((n, m))
+        # 常数b矩阵
+        H_b = np.zeros((m * n, 1))
+        # 系数a矩阵
+        H_a = np.zeros((m * n, m * n))
+        # 定义系数a矩阵的行数
+        l_a = 0
+        while l_a < m * n:
+            for k in range(0, n):  # 对行(时间轴)进行扫描
+                for i in range(0, m):  # 对列(X轴)进行扫描
+                    # 时间边界赋值(初始条件）
+                    if k == 0:
+                        H_a[l_a, l_a] = 1
+                        H_b[l_a] = self.ic
+                    # 左右边界赋值
+                    elif (i - 1) < 0:
+                        H_a[l_a, l_a] = 1
+                        H_b[l_a] = self.h_l
+                    elif (i + 1) == m:
+                        H_a[l_a, l_a] = 1
+                        H_b[l_a] = self.h_r
+                    else:
+                        # 源汇项赋值
+                        H_b[l_a] = H_b[l_a] - 2 * self.a * (self.sl * self.sl) * self.st * W(i * self.sl, k * self.st)
+                        # 给位置为(i, k)处的水头赋上系数值
+                        H_a[l_a, l_a] = H_a[l_a, l_a] - 2 * self.a * self.st - 2 * self.sl * self.sl
+                        # 给位置为(i-1，k)处的水头赋上系数值
+                        if (i - 1) >= 0:
+                            H_a[l_a, l_a - 1] = H_a[l_a, l_a - 1] + self.a * self.st
+                        # 给位置为(i+1, k)处的水头赋上系数值
+                        if (i + 1) < m:
+                            H_a[l_a, l_a + 1] = H_a[l_a, l_a + 1] + self.a * self.st
+                        # 给位置为(i-1, k-1)处的水头赋上系数值
+                        if (i - 1) >= 0 and (k - 1) >= 0:
+                            H_a[l_a, l_a - 1 - m] = H_a[l_a, l_a - 1 - m] + self.a * self.st
+                        # 给位置为(i+1, k-1)处的水头赋上系数值
+                        if (i + 1) < m and (k - 1) >= 0:
+                            H_a[l_a, l_a + 1 - m] = H_a[l_a, l_a + 1 - m] + self.a * self.st
+                        # 给位置为(i, k-1)处的水头赋上系数值
+                        if (k - 1) >= 0:
+                            H_a[l_a, l_a - m] = H_a[l_a, l_a - m] + 2 * self.sl * self.sl - self.a * 2 * self.st
                     l_a += 1
         # 解矩阵方程
         H = nla.solve(H_a, H_b)
@@ -393,8 +507,8 @@ class Confined_aquifer_USF(Unstableflow):
 
         def N(x):
             h = -1 * float(self.w) / (2 * self.T) * x * x + (
-                        ((self.h_r - self.ic) - (self.h_l - self.ic)) / self.xl + float(self.w) * self.xl / (
-                            2 * self.T)) * x + self.h_l - self.ic
+                    ((self.h_r - self.ic) - (self.h_l - self.ic)) / self.xl + float(self.w) * self.xl / (
+                    2 * self.T)) * x + self.h_l - self.ic
             return h
 
         # X轴
@@ -410,7 +524,7 @@ class Confined_aquifer_USF(Unstableflow):
         while l < m * n:
             for k in T:
                 for j in X:
-                    H[l] = (self.h_l - self.ic) * M(j, k) + (self.h_r - self.ic) * M(self.xl - j, k) #+ N(j)
+                    H[l] = (self.h_l - self.ic) * M(j, k) + (self.h_r - self.ic) * M(self.xl - j, k)  # + N(j)
                     l += 1
 
         for k in range(0, n):  # 对时间进行扫描
@@ -523,14 +637,16 @@ class Unconfined_aquifer_USF(Unstableflow):
                     if k == 0:
                         H_a[l_a, l_a] = 1
                         H_b[l_a] = self.ic
+                        # 左右边界赋值
+                    elif (i - 1) < 0:
+                        H_a[l_a, l_a] = 1
+                        H_b[l_a] = self.h_l
+                    elif (i + 1) == m:
+                        H_a[l_a, l_a] = 1
+                        H_b[l_a] = self.h_r
                     else:
                         # 源汇项赋值
                         H_b[l_a] = H_b[l_a] - self.a * (self.sl * self.sl) * self.st * W(i * self.sl)
-                        # 左右边界赋值
-                        if (i - 1) < 0:
-                            H_b[l_a] = H_b[l_a] - (self.a * self.st) * self.h_l
-                        if (i + 1) == m:
-                            H_b[l_a] = H_b[l_a] - self.a * self.st * self.h_r
                         # 给位置为(i, k)处的水头赋上系数值
                         H_a[l_a, l_a] = H_a[l_a, l_a] - 2 * self.a * self.st - self.sl * self.sl
                         # 给位置为(i-1，k)处的水头赋上系数值

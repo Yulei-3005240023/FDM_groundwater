@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1041</width>
+    <width>1521</width>
     <height>806</height>
    </rect>
   </property>
@@ -144,7 +144,7 @@
     <rect>
      <x>820</x>
      <y>70</y>
-     <width>160</width>
+     <width>318</width>
      <height>100</height>
     </rect>
    </property>
@@ -152,7 +152,14 @@
     <item>
      <widget class="QPushButton" name="solve">
       <property name="text">
-       <string>计算数值解结果</string>
+       <string>使用向后隐式差分计算数值解结果</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="solve_cn">
+      <property name="text">
+       <string>使用Crank-Nicolson中心差分计算数值解结果</string>
       </property>
      </widget>
     </item>
@@ -324,24 +331,24 @@
   <widget class="QWidget" name="verticalLayoutWidget_2">
    <property name="geometry">
     <rect>
-     <x>820</x>
-     <y>270</y>
+     <x>980</x>
+     <y>180</y>
      <width>160</width>
      <height>80</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_2">
     <item>
-     <widget class="QPushButton" name="draw_solve">
+     <widget class="QPushButton" name="draw_solve_surface">
       <property name="text">
-       <string>数值解绘图</string>
+       <string>数值解表面图绘图</string>
       </property>
      </widget>
     </item>
     <item>
-     <widget class="QPushButton" name="draw_solve_analytic_solution">
+     <widget class="QPushButton" name="draw_solve_analytic_solution_surface">
       <property name="text">
-       <string>解析解绘图</string>
+       <string>解析解表面图绘图</string>
       </property>
      </widget>
     </item>
@@ -401,45 +408,6 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;日志：&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
-  <widget class="QWidget" name="horizontalLayoutWidget_12">
-   <property name="geometry">
-    <rect>
-     <x>860</x>
-     <y>530</y>
-     <width>161</width>
-     <height>191</height>
-    </rect>
-   </property>
-   <layout class="QHBoxLayout" name="horizontalLayout_12">
-    <item>
-     <widget class="QSlider" name="verticalSlider">
-      <property name="minimum">
-       <number>1</number>
-      </property>
-      <property name="maximum">
-       <number>6</number>
-      </property>
-      <property name="value">
-       <number>1</number>
-      </property>
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QTextBrowser" name="textBrowser_2">
-      <property name="html">
-       <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'SimSun'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; color:#aaaaff;&quot;&gt;推动摇杆选择解析解运行的CPU核心数目，本计算机CPU型号为Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz   2.59 GHz六核&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-      </property>
-     </widget>
-    </item>
-   </layout>
-  </widget>
   <widget class="QWidget" name="horizontalLayoutWidget_13">
    <property name="geometry">
     <rect>
@@ -492,66 +460,12 @@ p, li { white-space: pre-wrap; }
     </item>
    </layout>
   </widget>
-  <widget class="QWidget" name="verticalLayoutWidget_4">
-   <property name="geometry">
-    <rect>
-     <x>780</x>
-     <y>530</y>
-     <width>81</width>
-     <height>191</height>
-    </rect>
-   </property>
-   <layout class="QVBoxLayout" name="verticalLayout_4">
-    <item>
-     <widget class="QLabel" name="label_16">
-      <property name="text">
-       <string>六个核心</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QLabel" name="label_19">
-      <property name="text">
-       <string>五个核心</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QLabel" name="label_18">
-      <property name="text">
-       <string>四个核心</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QLabel" name="label_20">
-      <property name="text">
-       <string>三个核心</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QLabel" name="label_17">
-      <property name="text">
-       <string>两个核心</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QLabel" name="label_15">
-      <property name="text">
-       <string>一个核心</string>
-      </property>
-     </widget>
-    </item>
-   </layout>
-  </widget>
   <widget class="QWidget" name="verticalLayoutWidget_5">
    <property name="geometry">
     <rect>
-     <x>820</x>
-     <y>360</y>
-     <width>160</width>
+     <x>890</x>
+     <y>270</y>
+     <width>178</width>
      <height>80</height>
     </rect>
    </property>
@@ -559,7 +473,7 @@ p, li { white-space: pre-wrap; }
     <item>
      <widget class="QPushButton" name="save_date">
       <property name="text">
-       <string>保存日志</string>
+       <string>保存日志并生成xlsx文件</string>
       </property>
      </widget>
     </item>
@@ -567,6 +481,149 @@ p, li { white-space: pre-wrap; }
      <widget class="QPushButton" name="back">
       <property name="text">
        <string>返回上一级</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="verticalLayoutWidget_6">
+   <property name="geometry">
+    <rect>
+     <x>1200</x>
+     <y>270</y>
+     <width>201</width>
+     <height>101</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout_6">
+    <item>
+     <widget class="QPushButton" name="draw_solve_line">
+      <property name="text">
+       <string>绘制选定时刻的数值解线型图</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="draw_solve_analytic_solution_line">
+      <property name="text">
+       <string>绘制选定时刻的解析解线型图</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QTextBrowser" name="textBrowser_time">
+   <property name="geometry">
+    <rect>
+     <x>1170</x>
+     <y>170</y>
+     <width>291</width>
+     <height>91</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QWidget" name="horizontalLayoutWidget_14">
+   <property name="geometry">
+    <rect>
+     <x>1170</x>
+     <y>70</y>
+     <width>291</width>
+     <height>101</height>
+    </rect>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout_14">
+    <item>
+     <widget class="QLabel" name="label_14">
+      <property name="text">
+       <string>选择进行绘图的时刻数</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QSpinBox" name="spinBox_time"/>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="horizontalLayoutWidget_12">
+   <property name="geometry">
+    <rect>
+     <x>1210</x>
+     <y>500</y>
+     <width>241</width>
+     <height>171</height>
+    </rect>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout_12">
+    <item>
+     <layout class="QVBoxLayout" name="verticalLayout_4">
+      <item>
+       <widget class="QLabel" name="label_16">
+        <property name="text">
+         <string>六个核心</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_19">
+        <property name="text">
+         <string>五个核心</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_18">
+        <property name="text">
+         <string>四个核心</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_20">
+        <property name="text">
+         <string>三个核心</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_17">
+        <property name="text">
+         <string>两个核心</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_15">
+        <property name="text">
+         <string>一个核心</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QSlider" name="verticalSlider">
+      <property name="minimum">
+       <number>1</number>
+      </property>
+      <property name="maximum">
+       <number>6</number>
+      </property>
+      <property name="value">
+       <number>1</number>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QTextBrowser" name="textBrowser_2">
+      <property name="html">
+       <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'SimSun'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; color:#aaaaff;&quot;&gt;推动摇杆选择解析解运行的CPU核心数目，本计算机CPU型号为Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz   2.59 GHz六核&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
      </widget>
     </item>

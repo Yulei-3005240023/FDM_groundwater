@@ -53,20 +53,28 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
         self.error = None
         # 相对误差存放
         self.relative_error = None
+        # 均方误差存放
+        self.mean_square_error = None
         # 空间相对差分步长
         self.relative_step_length = None
         # 时间相对差分步长
         self.relative_step_time = None
         # 压力扩散系数
         self.pressure_diffusion_coefficient = None
-        # 监测按钮《计算数值解》
+        # 数值解方法存放
+        self.how_fdm = None
+        # 选定时刻存放
+        self.choose_time = None
+        # 监测按钮《使用向后隐式差分计算数值解结果》
         self.ui.solve.clicked.connect(self.solve)
+        # 监测按钮《使用Crank-Nicolson中心差分计算数值解结果》
+        self.ui.solve_cn.clicked.connect(self.solve_cn)
         # 监测按钮《计算解析解》
         self.ui.solve_analytic_solution.clicked.connect(self.solve_analytic_solution)
-        # 监测按钮《绘制数值解》
-        self.ui.draw_solve.clicked.connect(self.draw_solve)
-        # 监测按钮《绘制解析解》
-        self.ui.draw_solve_analytic_solution.clicked.connect(self.draw_solve_analytic_solution)
+        # 监测按钮《数值解表面图绘图》
+        self.ui.draw_solve_surface.clicked.connect(self.draw_solve_surface)
+        # 监测按钮《解析解表面图绘图》
+        self.ui.draw_solve_analytic_solution_surface.clicked.connect(self.draw_solve_analytic_solution_surface)
         # 监测按钮《返回上一级》
         self.ui.back.clicked.connect(self.return_main)
         # 监测按钮《误差对比分析》
@@ -75,6 +83,10 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
         self.ui.draw_error.clicked.connect(self.draw_error)
         # 监测按钮《保存日志》
         self.ui.save_date.clicked.connect(self.save_date)
+        # 监测按钮《绘制选定时刻的数值解线型图》
+        self.ui.draw_solve_line.clicked.connect(self.draw_solve_line)
+        # 监测按钮《绘制选定时刻的解析解线型图》
+        self.ui.draw_solve_analytic_solution_line.clicked.connect(self.draw_solve_analytic_solution_line)
         # 获取自编库中的类的用法
         self.flow = fo.Confined_aquifer_USF()
         # 获取当前系统时间戳
@@ -85,8 +97,17 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
         self.ui.textBrowser.append(self.time)
         wb = openpyxl.Workbook()
         ws1 = wb.create_sheet('info', 0)
-        ws1.append(['x轴轴长', '空间差分步长', '相对空间差分步长', 't轴轴长', '时间差分步长', '相对时间差分步长', '左边界', '右边界', '初始条件', '压力扩散系数', '傅里叶级数', '相对误差'])
+        ws1.append(
+            ['x轴轴长', '空间差分步长', '相对空间差分步长', 't轴轴长', '时间差分步长', '相对时间差分步长', '左边界',
+             '右边界', '初始条件', '压力扩散系数', '傅里叶级数', '平均相对误差', '均方误差', '数值解差分格式'])
         wb.save('缓存/' + self.time + 'data.xlsx')
+
+    def set_time_choose_box(self):  # 设置时刻选择条
+        time_all = int(self.flow.tl / self.flow.st)
+        self.ui.spinBox_time.setMaximum(time_all)
+        self.ui.textBrowser_time.setPlainText(
+            '计算时长为：' + str(self.flow.tl) + '天，时间分割步长为：' + str(self.flow.st) + '天，共计有时刻' + str(
+                time_all) + '个。')
 
     def solve(self):
         self.flow.l_boundary(self.ui.l_boundary.toPlainText())
@@ -113,7 +134,8 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
         # 获取当前系统时间戳
         t = time.localtime()
         self.ui.textBrowser.append(str(time.strftime("%H:%M:%S", t)))
-        self.ui.textBrowser.append('正在进行数值解求解')
+        self.ui.textBrowser.append('正在使用向后隐式差分进行数值解求解')
+        self.how_fdm = '向后隐式差分'
         self.ui.textBrowser.append(
             '相对空间差分步长：' + str(self.relative_step_length) + '相对时间差分步长：' + str(self.relative_step_time))
         self.ui.textBrowser.append(
@@ -123,9 +145,57 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
         self.solve_fdm = self.flow.solve()
         end_time = time.perf_counter()
         self.ui.textBrowser.append('计算完毕，用时' + str(end_time - start_time) + '秒')
+        # 设置时刻选择条
+        self.set_time_choose_box()
 
-    def draw_solve(self):
-        self.flow.draw(self.solve_fdm)
+    def solve_cn(self):
+        self.flow.l_boundary(self.ui.l_boundary.toPlainText())
+        self.flow.r_boundary(self.ui.r_boundary.toPlainText())
+        self.flow.step_length(self.ui.step_length.toPlainText())
+        self.flow.step_time(self.ui.step_time.toPlainText())
+        self.flow.x_length(self.ui.x_length.toPlainText())
+        self.flow.t_length(self.ui.t_length.toPlainText())
+        self.flow.initial_condition(self.ui.initial_condition.toPlainText())
+        # 相对空间差分步长和相对时间差分步长的设定
+        self.relative_step_length = self.flow.sl / self.flow.xl
+        self.relative_step_time = self.flow.st / self.flow.tl
+        # 压力扩散系数的设定
+        self.pressure_diffusion_coefficient = self.ui.pressure_diffusion_coefficient.toPlainText()
+        # 判断填写的是压力模量系数还是导水系数和贮水系数
+        if self.ui.pressure_diffusion_coefficient.toPlainText() == '':
+            self.flow.storativity(self.ui.storativity.toPlainText())
+            self.flow.transmissivity(self.ui.transmissivity.toPlainText())
+            self.flow.leakage_recharge(self.ui.leakage_recharge.toPlainText())
+        else:
+            self.flow.pressure_diffusion_coefficient(self.ui.pressure_diffusion_coefficient.toPlainText())
+            self.flow.transmissivity(1)
+            self.flow.leakage_recharge("0")
+        # 获取当前系统时间戳
+        t = time.localtime()
+        self.ui.textBrowser.append(str(time.strftime("%H:%M:%S", t)))
+        self.ui.textBrowser.append('正在使用Crank-Nicolson中心差分进行数值解求解')
+        self.how_fdm = 'Crank-Nicolson中心差分'
+        self.ui.textBrowser.append(
+            '相对空间差分步长：' + str(self.relative_step_length) + '相对时间差分步长：' + str(self.relative_step_time))
+        self.ui.textBrowser.append(
+            '空间差分步长：' + str(self.flow.sl) + ' 时间差分步长：' + str(self.flow.st))
+        self.ui.textBrowser.append('压力扩散系数:' + self.pressure_diffusion_coefficient)
+        start_time = time.perf_counter()
+        self.solve_fdm = self.flow.solve_cn()
+        end_time = time.perf_counter()
+        self.ui.textBrowser.append('计算完毕，用时' + str(end_time - start_time) + '秒')
+        # 设置时刻选择条
+        self.set_time_choose_box()
+
+    def draw_solve_surface(self):
+        title = self.how_fdm + '数值解，空间差分步长为' + str(self.flow.sl) + '时间差分步长为' + str(self.flow.st)
+        self.flow.draw_surface(self.solve_fdm, title=title)
+
+    def draw_solve_line(self):
+        self.choose_time = self.ui.spinBox_time.value()
+        title = self.how_fdm + '数值解，空间差分步长为' + str(self.flow.sl) + '时间差分步长为' + str(
+            self.flow.st) + '，绘图时刻为第' + str(self.choose_time) + '时刻'
+        self.flow.draw(self.solve_fdm, time=self.choose_time, title=title)
 
     def solve_analytic_solution_threading(self):
         new_thread = threading.Thread(target=self.solve_analytic_solution())
@@ -172,11 +242,19 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
         self.solve_as = self.flow.solve_multi(fourier_series=self.fourier_series, cpu_cores=self.cpu_cores)
         end_time = time.perf_counter()
         self.ui.textBrowser.append('计算完毕，用时' + str(end_time - start_time) + '秒')
+        # 设置时刻选择条
+        self.set_time_choose_box()
 
-    def draw_solve_analytic_solution(self):
+    def draw_solve_analytic_solution_surface(self):
         title = '傅里叶级数解（傅里叶级数取前' + str(self.fourier_series) + '项)，' + '分配CPU核心' + str(
             self.cpu_cores) + '个'
-        self.flow.draw(self.solve_as, title=title)
+        self.flow.draw_surface(self.solve_as, title=title)
+
+    def draw_solve_analytic_solution_line(self):
+        self.choose_time = self.ui.spinBox_time.value()
+        title = '傅里叶级数解（傅里叶级数取前' + str(self.fourier_series) + '项)，' + '分配CPU核心' + str(
+            self.cpu_cores) + '个' + '，绘图时刻为第' + str(self.choose_time) + '时刻'
+        self.flow.draw(self.solve_as, time=self.choose_time, title=title)
 
     def return_main(self):
         self.ui.close()
@@ -187,22 +265,35 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
         # 时间轴差分点的数目
         n = int(self.flow.tl / self.flow.st) + 1
         self.error = np.zeros((n, m))
-        error_all_abs = 0
-        analytic_solution_abs = 0
+        error_all = 0
+        error_out = 0
+        relative_error = 0
         for k in range(0, n):  # 对时间进行扫描
             for i in range(0, m):  # 对空间进行扫描
-                self.error[k, i] = self.solve_fdm[k, i] - self.solve_as[k, i]
-                error_all_abs += abs(self.error[k, i])
-                analytic_solution_abs += abs(self.solve_as[k, i])
-        self.relative_error = error_all_abs / analytic_solution_abs
+                # 计算均方误差
+                self.error[k, i] = (self.solve_fdm[k, i] - self.solve_as[k, i])
+                error_all += self.error[k, i] * self.error[k, i]
+                # 计算相对误差
+                if self.solve_as[k, i] < 0.001:
+                    error_out += 1
+                else:
+                    relative_error += abs(self.error[k, i]) / abs(self.solve_as[k, i])
+
+        self.mean_square_error = error_all / (n * m)
+        self.relative_error = relative_error / (n * m - error_out)
         # 获取当前系统时间戳
         t = time.localtime()
         self.ui.textBrowser.append(str(time.strftime("%H:%M:%S", t)))
-        self.ui.textBrowser.append('误差分析完毕，相对误差:' + str(self.relative_error * 100) + '%')
+        self.ui.textBrowser.append('误差分析完毕:')
+        self.ui.textBrowser.append('均方误差:' + str(self.mean_square_error))
+        self.ui.textBrowser.append('平均相对误差:' + str(self.relative_error))
         self.ui.textBrowser.append('----------------')
         wb = openpyxl.load_workbook('缓存/' + self.time + 'data.xlsx')
         ws = wb['info']
-        ws.append([self.flow.xl, self.flow.sl, self.relative_step_length, self.flow.tl, self.flow.st, self.relative_step_time, self.flow.h_l, self.flow.h_r, self.flow.ic, self.pressure_diffusion_coefficient, self.fourier_series, self.relative_error])
+        ws.append(
+            [self.flow.xl, self.flow.sl, self.relative_step_length, self.flow.tl, self.flow.st, self.relative_step_time,
+             self.flow.h_l, self.flow.h_r, self.flow.ic, self.pressure_diffusion_coefficient, self.fourier_series,
+             self.relative_error, self.mean_square_error, self.how_fdm])
         wb.save('缓存/' + self.time + 'data.xlsx')
 
     def draw_error(self):
@@ -216,6 +307,7 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
         f_xlsx = filepath + '/日志' + str(time.strftime("%Y-%m-%d_%H时%M分%S秒", t)) + '.xlsx'
         file = open(f_, 'w')
         file.write(self.ui.textBrowser.toPlainText())
+
         file.close()
         wb = openpyxl.load_workbook('缓存/' + self.time + 'data.xlsx')
         wb.save(f_xlsx)
