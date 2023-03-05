@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>760</width>
-    <height>604</height>
+    <width>1180</width>
+    <height>792</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -37,8 +37,8 @@
     <rect>
      <x>10</x>
      <y>40</y>
-     <width>371</width>
-     <height>89</height>
+     <width>741</width>
+     <height>41</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
@@ -61,10 +61,10 @@
   <widget class="QWidget" name="horizontalLayoutWidget_2">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>130</y>
+     <x>380</x>
+     <y>310</y>
      <width>371</width>
-     <height>89</height>
+     <height>101</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -78,7 +78,7 @@
     <item>
      <widget class="QTextEdit" name="leakage_recharge">
       <property name="placeholderText">
-       <string>潜水含水层补给源汇项的设定，可以为一个常数也可以为带有前缀为sy.的函数,如sy.sin(x)</string>
+       <string>潜水含水层补给源汇项的设定，可以为一个常数也可以为带有前缀为sy.的函数,如sy.sin(x) + sy.cos(t)</string>
       </property>
      </widget>
     </item>
@@ -88,9 +88,9 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>220</y>
+     <y>230</y>
      <width>371</width>
-     <height>89</height>
+     <height>81</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -113,10 +113,10 @@
   <widget class="QWidget" name="horizontalLayoutWidget_4">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>310</y>
+     <x>380</x>
+     <y>230</y>
      <width>371</width>
-     <height>89</height>
+     <height>81</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -140,23 +140,23 @@
    <property name="geometry">
     <rect>
      <x>380</x>
-     <y>40</y>
+     <y>130</y>
      <width>371</width>
-     <height>89</height>
+     <height>51</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_5">
     <item>
      <widget class="QLabel" name="label_6">
       <property name="text">
-       <string> 差分步长</string>
+       <string> 空间差分步长</string>
       </property>
      </widget>
     </item>
     <item>
      <widget class="QTextEdit" name="step_length">
       <property name="placeholderText">
-       <string>有限差分法差分步长的设定，输入整数或者浮点数</string>
+       <string>有限差分法X轴差分步长的设定，输入整数或者浮点数</string>
       </property>
      </widget>
     </item>
@@ -165,10 +165,10 @@
   <widget class="QWidget" name="horizontalLayoutWidget_6">
    <property name="geometry">
     <rect>
-     <x>380</x>
+     <x>10</x>
      <y>130</y>
      <width>371</width>
-     <height>89</height>
+     <height>51</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_6">
@@ -192,23 +192,23 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>400</y>
-     <width>371</width>
-     <height>89</height>
+     <y>410</y>
+     <width>741</width>
+     <height>61</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_7">
     <item>
      <widget class="QLabel" name="label_8">
       <property name="text">
-       <string> 参考厚度</string>
+       <string> 解析解：参考厚度/初始条件</string>
       </property>
      </widget>
     </item>
     <item>
      <widget class="QTextEdit" name="reference_thickness">
       <property name="placeholderText">
-       <string>潜水含水层的参考厚度，使用参考厚度法来简化该方程，输入整数或者浮点数</string>
+       <string>潜水含水层的参考厚度，在计算解析解中，默认潜水面的参考厚度等于初始条件，使用参考厚度法或者平方法来线性化Boussinesq方程，若计算解析解必须填入此项，输入整数或者浮点数</string>
       </property>
      </widget>
     </item>
@@ -217,24 +217,24 @@
   <widget class="QWidget" name="horizontalLayoutWidget_8">
    <property name="geometry">
     <rect>
-     <x>380</x>
-     <y>310</y>
-     <width>371</width>
-     <height>89</height>
+     <x>10</x>
+     <y>470</y>
+     <width>741</width>
+     <height>51</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_8">
     <item>
      <widget class="QLabel" name="label_9">
       <property name="text">
-       <string> 初始条件</string>
+       <string> 数值解：初始条件</string>
       </property>
      </widget>
     </item>
     <item>
      <widget class="QTextEdit" name="initial_condition">
       <property name="placeholderText">
-       <string>非稳定流的初始条件， 在潜水含水层中为相对于参考厚度的水头，输入整数或者浮点数</string>
+       <string>非稳定流的初始条件，用于进行数值解的计算，若计算数值解必须填写此项，输入整数或者浮点数</string>
       </property>
      </widget>
     </item>
@@ -243,10 +243,10 @@
   <widget class="QWidget" name="horizontalLayoutWidget_9">
    <property name="geometry">
     <rect>
-     <x>380</x>
-     <y>220</y>
+     <x>10</x>
+     <y>180</y>
      <width>371</width>
-     <height>89</height>
+     <height>51</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_9">
@@ -269,8 +269,8 @@
   <widget class="QWidget" name="horizontalLayoutWidget_11">
    <property name="geometry">
     <rect>
-     <x>380</x>
-     <y>400</y>
+     <x>10</x>
+     <y>310</y>
      <width>371</width>
      <height>101</height>
     </rect>
@@ -296,9 +296,9 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>490</y>
-     <width>371</width>
-     <height>89</height>
+     <y>80</y>
+     <width>741</width>
+     <height>51</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_12">
@@ -310,7 +310,7 @@
      </widget>
     </item>
     <item>
-     <widget class="QTextEdit" name="storativity_2">
+     <widget class="QTextEdit" name="specific_yield">
       <property name="placeholderText">
        <string>潜水含水层给水度（重力给水度）的设定，输入整数或者浮点数</string>
       </property>
@@ -318,20 +318,159 @@
     </item>
    </layout>
   </widget>
-  <widget class="QWidget" name="horizontalLayoutWidget_10">
+  <widget class="QWidget" name="horizontalLayoutWidget_13">
    <property name="geometry">
     <rect>
      <x>380</x>
-     <y>500</y>
+     <y>180</y>
      <width>371</width>
+     <height>51</height>
+    </rect>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout_13">
+    <item>
+     <widget class="QLabel" name="label_14">
+      <property name="text">
+       <string> 时间差分步长</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QTextEdit" name="step_time">
+      <property name="placeholderText">
+       <string>有限差分法时间轴差分步长的设定，输入整数或者浮点数</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="horizontalLayoutWidget_14">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>520</y>
+     <width>741</width>
+     <height>51</height>
+    </rect>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout_14">
+    <item>
+     <widget class="QLabel" name="label_11">
+      <property name="text">
+       <string>傅里叶级数</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QTextBrowser" name="textBrowser_3">
+      <property name="html">
+       <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'SimSun'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; color:#aaaa00;&quot;&gt;解析解傅里叶级数的取值，级数越大越精确，但是对于计算机的负荷就越大&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QSpinBox" name="spinBox_fourier_series">
+      <property name="maximum">
+       <number>1000000</number>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QTextBrowser" name="textBrowser">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>570</y>
+     <width>741</width>
+     <height>192</height>
+    </rect>
+   </property>
+   <property name="html">
+    <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'SimSun'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;日志：&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </widget>
+  <widget class="QWidget" name="verticalLayoutWidget_4">
+   <property name="geometry">
+    <rect>
+     <x>820</x>
+     <y>40</y>
+     <width>318</width>
+     <height>100</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout_6">
+    <item>
+     <widget class="QPushButton" name="solve">
+      <property name="text">
+       <string>计算数值解结果</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="solve_reference_thickness_method">
+      <property name="text">
+       <string>计算参考厚度法的解析解结果</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="solve_square_method">
+      <property name="text">
+       <string>计算平方法的解析解结果</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="verticalLayoutWidget_2">
+   <property name="geometry">
+    <rect>
+     <x>820</x>
+     <y>150</y>
+     <width>191</width>
+     <height>100</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout_2">
+    <item>
+     <widget class="QPushButton" name="draw_solve_surface">
+      <property name="text">
+       <string>数值解表面图绘图</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="draw_solve_reference_thickness_method_surface">
+      <property name="text">
+       <string>参考厚度解析解表面图绘图</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="verticalLayoutWidget_5">
+   <property name="geometry">
+    <rect>
+     <x>820</x>
+     <y>520</y>
+     <width>321</width>
      <height>71</height>
     </rect>
    </property>
-   <layout class="QHBoxLayout" name="horizontalLayout_10">
+   <layout class="QVBoxLayout" name="verticalLayout_5">
     <item>
-     <widget class="QPushButton" name="draw">
+     <widget class="QPushButton" name="save_date">
       <property name="text">
-       <string>计算并绘图</string>
+       <string>保存日志信息并生成关于误差的xlsx文件</string>
       </property>
      </widget>
     </item>
@@ -339,6 +478,148 @@
      <widget class="QPushButton" name="back">
       <property name="text">
        <string>返回上一级</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="gridLayoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>820</x>
+     <y>250</y>
+     <width>319</width>
+     <height>262</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="4" column="0">
+     <widget class="QPushButton" name="draw_solve_reference_thickness_line">
+      <property name="text">
+       <string>绘制选定时刻的参考厚度法解析解线型图</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0">
+     <widget class="QPushButton" name="draw_solve_line">
+      <property name="text">
+       <string>绘制选定时刻的数值解线型图</string>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="0">
+     <widget class="QPushButton" name="draw_complete">
+      <property name="text">
+       <string>绘制数值解和解析解对比图</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout_15">
+      <item>
+       <widget class="QLabel" name="label_15">
+        <property name="text">
+         <string>选择进行绘图的时刻数</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QSpinBox" name="spinBox_time"/>
+      </item>
+     </layout>
+    </item>
+    <item row="2" column="0">
+     <widget class="QTextBrowser" name="textBrowser_time"/>
+    </item>
+    <item row="5" column="0">
+     <widget class="QPushButton" name="draw_solve_square_line">
+      <property name="text">
+       <string>绘制选定时刻的平方法解析解线型图</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="horizontalLayoutWidget_15">
+   <property name="geometry">
+    <rect>
+     <x>820</x>
+     <y>590</y>
+     <width>321</width>
+     <height>171</height>
+    </rect>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout_16">
+    <item>
+     <layout class="QVBoxLayout" name="verticalLayout_4">
+      <item>
+       <widget class="QLabel" name="label_16">
+        <property name="text">
+         <string>六个核心</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_19">
+        <property name="text">
+         <string>五个核心</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_18">
+        <property name="text">
+         <string>四个核心</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_20">
+        <property name="text">
+         <string>三个核心</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_17">
+        <property name="text">
+         <string>两个核心</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_21">
+        <property name="text">
+         <string>一个核心</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QSlider" name="verticalSlider">
+      <property name="minimum">
+       <number>1</number>
+      </property>
+      <property name="maximum">
+       <number>6</number>
+      </property>
+      <property name="value">
+       <number>1</number>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QTextBrowser" name="textBrowser_2">
+      <property name="html">
+       <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'SimSun'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; color:#aaaaff;&quot;&gt;推动摇杆选择解析解运行的CPU核心数目，本计算机CPU型号为Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz   2.59 GHz六核&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
      </widget>
     </item>

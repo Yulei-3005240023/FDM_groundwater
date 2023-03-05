@@ -11,11 +11,16 @@ import matplotlib.pyplot as plt
 from ctypes import cdll, c_double, c_int
 
 # 加载动态链接库
-lib = cdll.LoadLibrary('F:\PythonProject\FDM_undergroundwater\FDMundergroundwater\jishu.so')  # 将my_library.so替换为您的动态链接库文件名
+lib = cdll.LoadLibrary(
+    'F:\PythonProject\FDM_undergroundwater\FDMundergroundwater\juas.so')  # 加载动态链接库
 
 # 给定函数参数类型
-lib.M.argtypes = [c_double, c_double, c_double, c_double, c_int]
-lib.M.restype = c_double
+lib.M_rtm.argtypes = [c_double, c_double, c_double, c_double, c_int]
+lib.M_rtm.restype = c_double
+lib.Boussinesq_one_dimension_unstable_flow_reference_thickness_method.argtypes = [c_double, c_double, c_double,
+                                                                                  c_double, c_double, c_double,
+                                                                                  c_double, c_int]
+lib.Boussinesq_one_dimension_unstable_flow_reference_thickness_method.restype = c_double
 
 
 class Stableflow:
@@ -254,11 +259,55 @@ class Unstableflow:
             return hy
 
         ax.set_ylim(minH_y(H_ALL[time]), maxH_y(H_ALL[time]))
+        ax.set(ylabel='水头（m）', xlabel='X轴（m）')
+        ax.legend()
         plt.suptitle(self.name_chinese)
         if title == '':
             plt.title("差分数值解，当前为第{0}时刻(差分空间步长{1}，时间步长{2})".format(time, self.sl, self.st))
         else:
             plt.title(title)
+        plt.show()
+
+    def draw_complete(self, H_ALL0: np.ndarray, H_ALL1=None, H_ALL2=None, time=0, title='', label0='', label1='',
+                      label2=''):  # 按给定的时刻对比水头曲线
+        # X轴单元格的数目
+        if H_ALL1 is None:
+            H_ALL1 = []
+        m = int(self.xl / self.sl) + 1
+        # X轴
+        X = np.linspace(0, self.xl, m)
+        # 可以plt绘图过程中中文无法显示的问题
+        plt.rcParams['font.sans-serif'] = ['SimHei']
+        # 解决负号为方块的问题
+        plt.rcParams['axes.unicode_minus'] = False
+        fig = plt.figure(figsize=(10, 7))
+        ax = fig.add_subplot()
+        ax.plot(X, H_ALL0[time], linewidth=1, antialiased=True, color='green', label=label0)
+        if H_ALL1 is not None:
+            ax.plot(X, H_ALL1[time], linewidth=1, antialiased=True, color='red', label=label1)
+        if H_ALL2 is not None:
+            ax.plot(X, H_ALL1[time], linewidth=1, antialiased=True, color='red', label=label2)
+
+        ax.set(ylabel='水头（m）', xlabel='X轴（m）')
+        ax.legend()
+
+        def maxH_y(h_all):
+            hy = 0
+            for i in h_all:
+                if i > hy:
+                    hy = i
+            return hy
+
+        def minH_y(h_all):
+            hy = 0
+            for i in h_all:
+                if i < hy:
+                    hy = i
+            return hy
+
+        plt.suptitle(self.name_chinese)
+        ax.set_ylim(minH_y(H_ALL0[time]), maxH_y(H_ALL0[time]))
+        plt.title(title)
         plt.show()
 
     def draw_surface(self, H_ALL: np.ndarray, title=''):  # 绘制表面图
@@ -297,6 +346,7 @@ class Unstableflow:
 
         ax.set_zlim(minH_z(H_ALL), maxH_z(H_ALL))
         ax.plot_surface(X, T, H_ALL, linewidth=0, antialiased=True, cmap=plt.get_cmap('rainbow'))
+        ax.set(zlabel='水头（m）', ylabel='时间轴（m）', xlabel='X轴（m）')
         plt.suptitle(self.name_chinese)
         if title == '':
             plt.title("差分数值解(差分空间步长{0}，时间步长{1})".format(self.sl, self.st))
@@ -305,7 +355,7 @@ class Unstableflow:
         plt.show()
 
 
-def solve_as(a, xl, sl, n_, t_, h_l, h_r, ic, c, T, w, fourier_series, return_dict):  # 该函数用于多核心的傅里叶解析解计算
+def solve_as_causf(a, xl, sl, n_, t_, h_l, h_r, ic, c, fourier_series, return_dict):  # 该函数用于多核心的傅里叶解析解计算
     # X轴差分点的数目
     m = int(xl / sl) + 1
 
@@ -314,13 +364,6 @@ def solve_as(a, xl, sl, n_, t_, h_l, h_r, ic, c, T, w, fourier_series, return_di
         for i_ in range(1, fourier_series + 1):
             h -= 2 * np.sin(i_ * np.pi * x / xl) / (i_ * np.pi) * np.exp(
                 -(a * i_ * i_ * np.pi * np.pi) / (xl * xl) * t)
-        return h
-
-    def N(x):
-        if T == 0:
-            return 0
-        else:
-            h = -1 * (float(w) / (2 * T)) * x * x + ((h_r - h_l) / xl + float(w) * xl / (2 * T)) * x + h_l
         return h
 
     # X轴
@@ -332,11 +375,32 @@ def solve_as(a, xl, sl, n_, t_, h_l, h_r, ic, c, T, w, fourier_series, return_di
     while l < m * n_:
         for k in t_:
             for j in X:
-                H[l] = (h_l - ic) * lib.M(a, j, k, xl, fourier_series) + (h_r - ic) * lib.M(a, xl - j, k, xl,
-                                                                                            fourier_series)  # M(xl - j, k)  # + N(j)
+                H[l] = (h_l - ic) * lib.M_rtm(a, j, k, xl, fourier_series) + (h_r - ic) * lib.M_rtm(a, xl - j, k, xl,
+                                                                                                    fourier_series)  # M(xl - j, k)  # + N(j)
                 l += 1
 
     return_dict[c] = H
+    return return_dict
+
+
+# 该函数用于多核心的傅里叶解析解计算,使用参考厚度法求解潜水含水层一维非稳定流
+def solve_as_reference_thickness_uausf(a, xl, sl, n_, t_, h_l, h_r, reference_thickness, c, fourier_series, return_dict):
+    # X轴差分点的数目
+    m = int(xl / sl) + 1
+    # X轴
+    X = np.linspace(0, xl, m)
+    # 所有解值矩阵
+    H = np.zeros((m * n_, 1))
+    # 定义解值矩阵的行数
+    l = 0
+    while l < m * n_:
+        for k in t_:
+            for j in X:
+                H[l] = lib.Boussinesq_one_dimension_unstable_flow_reference_thickness_method(a, j, k, xl, h_l, h_r, reference_thickness, fourier_series)
+                l += 1
+
+    return_dict[c] = H
+    print(return_dict[c])
     return return_dict
 
 
@@ -559,8 +623,8 @@ class Confined_aquifer_USF(Unstableflow):
             else:
                 t_ = np.linspace((c * n_) * self.st, self.tl, n - c * n_)
                 n_ = n - c * n_
-            p = Process(target=solve_as, args=(
-                self.a, self.xl, self.sl, n_, t_, self.h_l, self.h_r, self.ic, c, self.T, self.w, fourier_series,
+            p = Process(target=solve_as_causf, args=(
+                self.a, self.xl, self.sl, n_, t_, self.h_l, self.h_r, self.ic, c, fourier_series,
                 return_dict))
             p.start()
             plist.append(p)
@@ -588,39 +652,38 @@ class Unconfined_aquifer_USF(Unstableflow):
         self.w = None
         self.a = None
         self.ha = None
+        self.name_chinese = '潜水含水层非稳定一维流'
 
-    def reference_thickness(self, ha):  # 潜水含水层的参考厚度，使用参考厚度法来简化该方程
+    def reference_thickness(self, ha):  # 潜水含水层的参考厚度，解析解求解中使用参考厚度法线性化偏微分方程
         self.ha = float(ha)
 
     def pressure_diffusion_coefficient(self, a):  # 潜水含水层压力扩散系数的设定。等于渗透系数乘初始水头常数除给水度Kh0/Sy
         self.a = float(a)
 
-    def leakage_recharge(self, w: str):  # 潜水含水层源汇项的设定，可以为一个常数也可以为带有前缀为sy.的函数,如sy.sin(x)
+    def leakage_recharge(self, w: str):  # 潜水含水层源汇项的设定，可以为一个常数也可以为带有前缀为sy.的函数,如sy.sin(x) + sy.cos(y)
         self.w = w
 
     def hydraulic_conductivity(self, K):  # 潜水含水层渗透系数的设定
         self.K = float(K)
 
-    def storativity(self, Sy):  # 潜水含水层储水系数（重力给水度）的设定
+    def specific_yield(self, Sy):  # 潜水含水层储水系数（重力给水度）的设定
         self.Sy = float(Sy)
 
     def solve(self):
         # 如果未设定压力扩散系数
         if self.a is None or self.a == "":
-            self.a = (self.K * self.ha) / self.Sy
+            self.a = self.K / self.Sy
         # 对于潜水含水层一维非稳定流，定义两个参数 x t
         x = symbols("x")
         t = symbols("t")
         # X轴差分点的数目
         m = int(self.xl / self.sl) + 1
-        # 时间轴差分步长
-        self.st = self.sl * self.tl / self.xl
         # 时间轴差分点的数目
         n = int(self.tl / self.st) + 1
 
-        # 对函数W(x)为源汇项函数除以K,ha
-        def W(x):
-            return eval(self.w) / (self.K * self.ha)
+        # 对函数W(x, t)为源汇项函数除以K
+        def W(x, t):
+            return eval(self.w) / self.K
 
         # 创建一个全部值为0的矩阵，用于存放各个差分位置的水头值
         H_ALL = np.zeros((n, m))
@@ -632,36 +695,82 @@ class Unconfined_aquifer_USF(Unstableflow):
         l_a = 0
         while l_a < m * n:
             for k in range(0, n):  # 对行(时间轴)进行扫描
+                H_c = np.zeros((m, m))
+                l_c = 0
+                H_d = np.zeros((m, 1))
                 for i in range(0, m):  # 对列(X轴)进行扫描
                     # 时间边界赋值(初始条件）
                     if k == 0:
-                        H_a[l_a, l_a] = 1
-                        H_b[l_a] = self.ic
+                        H_c[l_c, l_c] = 1
+                        H_d[l_c] = self.ic
                         # 左右边界赋值
                     elif (i - 1) < 0:
-                        H_a[l_a, l_a] = 1
-                        H_b[l_a] = self.h_l
+                        H_c[l_c, l_c] = 1
+                        H_d[l_c] = self.h_l
                     elif (i + 1) == m:
-                        H_a[l_a, l_a] = 1
-                        H_b[l_a] = self.h_r
+                        H_c[l_c, l_c] = 1
+                        H_d[l_c] = self.h_r
                     else:
                         # 源汇项赋值
-                        H_b[l_a] = H_b[l_a] - self.a * (self.sl * self.sl) * self.st * W(i * self.sl)
+                        H_d[l_c] = H_d[l_c] - (self.sl * self.sl) * W(i * self.sl, k * self.st) - (
+                                self.sl * self.sl / (self.a * self.st)) * H_ALL[k - 1, i]
                         # 给位置为(i, k)处的水头赋上系数值
-                        H_a[l_a, l_a] = H_a[l_a, l_a] - 2 * self.a * self.st - self.sl * self.sl
+                        H_c[l_c, l_c] = -(self.sl * self.sl / (self.a * self.st) + (
+                                H_ALL[k - 1, i + 1] + H_ALL[k - 1, i]) / 2 + (
+                                                  H_ALL[k - 1, i] + H_ALL[k - 1, i - 1]) / 2)
                         # 给位置为(i-1，k)处的水头赋上系数值
                         if (i - 1) >= 0:
-                            H_a[l_a, l_a - 1] = H_a[l_a, l_a - 1] + self.a * self.st
+                            H_c[l_c, l_c - 1] = (H_ALL[k - 1, i] + H_ALL[k - 1, i - 1]) / 2
                         # 给位置为(i+1, k)处的水头赋上系数值
                         if (i + 1) < m:
-                            H_a[l_a, l_a + 1] = H_a[l_a, l_a + 1] + self.a * self.st
-                        # 给位置为(i, k-1)处的水头赋上系数值
-                        if (k - 1) >= 0:
-                            H_a[l_a, l_a - m] = H_a[l_a, l_a - m] + self.sl * self.sl
+                            H_c[l_c, l_c + 1] = (H_ALL[k - 1, i + 1] + H_ALL[k - 1, i]) / 2
+                    l_c += 1
                     l_a += 1
-        # 解矩阵方程
-        H = nla.solve(H_a, H_b)
+                H = nla.solve(H_c, H_d)
+                for o in range(0, m):  # 对空间进行扫描
+                    H_ALL[k, o] = H[o]
+        return H_ALL
+
+    def solve_reference_thickness_method_multi(self, cpu_cores=2, fourier_series=20):  # 默认取傅里叶级数前20项，CPU运算核心为两个，多核运行选择
+        # 如果未设定压力扩散系数
+        if self.a is None or self.a == '':
+            self.a = self.K / self.Sy
+        # X轴差分点的数目
+        m = int(self.xl / self.sl) + 1
+        # 时间轴差分点的数目
+        n = int(self.tl / self.st) + 1
+        # 分配到每一个cpu上的数目
+        n_ = n // cpu_cores
+        # 创建一个全部值为0的矩阵，用于存放各个与差分位置对等的解析解的水头值
+        H_ALL = np.zeros((n, m))
+        # 所有解值矩阵
+        H = np.zeros((m * n, 1))
+        # 创建类似字典的跨进程共享对象
+        manager_uausf = Manager()
+        return_dict1 = manager_uausf.dict()
+        # 创建多进程工作列表
+        plist = []
+        # 多进程任务分配
+        for c in range(0, cpu_cores):
+            # 时间轴（以拆分）
+            if c != (cpu_cores - 1):
+                t_ = np.linspace(c * n_ * self.st, (c + 1) * (n_ - 1) * self.st, n_)
+            else:
+                t_ = np.linspace((c * n_) * self.st, self.tl, n - c * n_)
+                n_ = n - c * n_
+            p = Process(target=solve_as_reference_thickness_uausf, args=(self.a, self.xl, self.sl, n_, t_, self.h_l, self.h_r, self.ha, c, fourier_series, return_dict1))
+            p.start()
+            plist.append(p)
+        # 多进程运算开始
+        for p in plist:
+            p.join()
+        l = 0
+        while l < m * n:
+            for c in range(0, cpu_cores):
+                for h in return_dict1[c]:
+                    H[l] = h
+                    l += 1
         for k in range(0, n):  # 对时间进行扫描
             for i in range(0, m):  # 对空间进行扫描
-                H_ALL[k, i] = H[k * m + i] + self.ha
+                H_ALL[k, i] = H[k * m + i]
         return H_ALL

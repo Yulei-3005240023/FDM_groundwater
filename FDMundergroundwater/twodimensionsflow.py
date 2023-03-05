@@ -427,7 +427,7 @@ class Unconfined_aquifer_USF(Unstableflow):  # 潜水Boussinesq方程
     def leakage_recharge(self, w: str = "0"):  # 潜水含水层越流补给源汇项的设定，可以设定为x,y,t的函数。
         self.w = w
 
-    def storativity(self, Sy):  # 潜水含水层给水度（重力给水度）的设定
+    def specific_yield(self, Sy):  # 潜水含水层给水度（重力给水度）的设定
         self.Sy = float(Sy)
 
     def solve(self):
@@ -442,18 +442,21 @@ class Unconfined_aquifer_USF(Unstableflow):  # 潜水Boussinesq方程
 
         # 对函数W(x)为源汇项函数除以导水系数
         def W(x, y, t):
-            return eval(self.w) / (self.K * self.ha)
+            return eval(self.w) / self.K
 
         # 创建一个列表来储存所有时刻的水头值
         H_all_time = []
         # 常数b矩阵
         H_b = np.zeros((m * n * p, 1))
-        # 系数a矩阵5
+        # 系数a矩阵
         H_a = np.zeros((m * n * p, m * n * p))
         # 系数a矩阵行数
         l_a = 0
         while l_a < m * n * p:
             for k in range(0, p):  # 对时间进行扫描
+                H_c = np.zeros((m * n, m * n))
+                l_c = 0
+                H_d = np.zeros((m * n, 1))
                 for i in range(0, n):  # 对行进行扫描
                     for j in range(0, m):  # 对列进行扫描
                         #  初值设定
@@ -489,6 +492,7 @@ class Unconfined_aquifer_USF(Unstableflow):  # 潜水Boussinesq方程
                             H_a[l_a, (k - 1) * n * m + i * m + j] = self.Sy * self.sl * self.sl / (self.K * self.ha)
                             # 源汇项赋值
                             H_b[l_a] = H_b[l_a] - W(j * self.sl, i * self.sl, k * self.st) * self.sl * self.sl * self.st
+                        l_c += 1
                         l_a += 1
         # 解矩阵方程
         H = nla.solve(H_a, H_b)
