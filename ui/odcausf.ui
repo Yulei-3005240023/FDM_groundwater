@@ -71,7 +71,7 @@
     <item>
      <widget class="QLabel" name="label_4">
       <property name="text">
-       <string>  左边界 </string>
+       <string>  左边界     </string>
       </property>
      </widget>
     </item>
@@ -234,7 +234,7 @@
     <item>
      <widget class="QLabel" name="label_10">
       <property name="text">
-       <string> 贮水系数 </string>
+       <string> 贮水系数</string>
       </property>
      </widget>
     </item>
@@ -328,9 +328,9 @@
   <widget class="QTextBrowser" name="textBrowser">
    <property name="geometry">
     <rect>
-     <x>15</x>
-     <y>590</y>
-     <width>731</width>
+     <x>10</x>
+     <y>600</y>
+     <width>741</width>
      <height>192</height>
     </rect>
    </property>

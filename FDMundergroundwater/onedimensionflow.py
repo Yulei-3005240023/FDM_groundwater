@@ -15,12 +15,16 @@ lib = cdll.LoadLibrary(
     'F:\PythonProject\FDM_undergroundwater\FDMundergroundwater\juas.so')  # 加载动态链接库
 
 # 给定函数参数类型
-lib.M_rtm.argtypes = [c_double, c_double, c_double, c_double, c_int]
-lib.M_rtm.restype = c_double
+lib.M.argtypes = [c_double, c_double, c_double, c_double, c_int]
+lib.M.restype = c_double
 lib.Boussinesq_one_dimension_unstable_flow_reference_thickness_method.argtypes = [c_double, c_double, c_double,
                                                                                   c_double, c_double, c_double,
                                                                                   c_double, c_int]
 lib.Boussinesq_one_dimension_unstable_flow_reference_thickness_method.restype = c_double
+lib.Boussinesq_one_dimension_unstable_flow_square_method.argtypes = [c_double, c_double, c_double,
+                                                                     c_double, c_double, c_double,
+                                                                     c_double, c_int]
+lib.Boussinesq_one_dimension_unstable_flow_square_method.restype = c_double
 
 
 class Stableflow:
@@ -260,7 +264,6 @@ class Unstableflow:
 
         ax.set_ylim(minH_y(H_ALL[time]), maxH_y(H_ALL[time]))
         ax.set(ylabel='水头（m）', xlabel='X轴（m）')
-        ax.legend()
         plt.suptitle(self.name_chinese)
         if title == '':
             plt.title("差分数值解，当前为第{0}时刻(差分空间步长{1}，时间步长{2})".format(time, self.sl, self.st))
@@ -286,7 +289,7 @@ class Unstableflow:
         if H_ALL1 is not None:
             ax.plot(X, H_ALL1[time], linewidth=1, antialiased=True, color='red', label=label1)
         if H_ALL2 is not None:
-            ax.plot(X, H_ALL1[time], linewidth=1, antialiased=True, color='red', label=label2)
+            ax.plot(X, H_ALL2[time], linewidth=1, antialiased=True, color='blue', label=label2)
 
         ax.set(ylabel='水头（m）', xlabel='X轴（m）')
         ax.legend()
@@ -346,7 +349,7 @@ class Unstableflow:
 
         ax.set_zlim(minH_z(H_ALL), maxH_z(H_ALL))
         ax.plot_surface(X, T, H_ALL, linewidth=0, antialiased=True, cmap=plt.get_cmap('rainbow'))
-        ax.set(zlabel='水头（m）', ylabel='时间轴（m）', xlabel='X轴（m）')
+        ax.set(zlabel='水头（m）', ylabel='时间轴（d）', xlabel='X轴（m）')
         plt.suptitle(self.name_chinese)
         if title == '':
             plt.title("差分数值解(差分空间步长{0}，时间步长{1})".format(self.sl, self.st))
@@ -375,8 +378,8 @@ def solve_as_causf(a, xl, sl, n_, t_, h_l, h_r, ic, c, fourier_series, return_di
     while l < m * n_:
         for k in t_:
             for j in X:
-                H[l] = (h_l - ic) * lib.M_rtm(a, j, k, xl, fourier_series) + (h_r - ic) * lib.M_rtm(a, xl - j, k, xl,
-                                                                                                    fourier_series)  # M(xl - j, k)  # + N(j)
+                H[l] = (h_l - ic) * lib.M(a, j, k, xl, fourier_series) + (h_r - ic) * lib.M(a, xl - j, k, xl,
+                                                                                            fourier_series)  # M(xl - j, k)  # + N(j)
                 l += 1
 
     return_dict[c] = H
@@ -384,7 +387,8 @@ def solve_as_causf(a, xl, sl, n_, t_, h_l, h_r, ic, c, fourier_series, return_di
 
 
 # 该函数用于多核心的傅里叶解析解计算,使用参考厚度法求解潜水含水层一维非稳定流
-def solve_as_reference_thickness_uausf(a, xl, sl, n_, t_, h_l, h_r, reference_thickness, c, fourier_series, return_dict):
+def solve_as_reference_thickness_uausf(a, xl, sl, n_, t_, h_l, h_r, reference_thickness, c, fourier_series,
+                                       return_dict):
     # X轴差分点的数目
     m = int(xl / sl) + 1
     # X轴
@@ -396,11 +400,33 @@ def solve_as_reference_thickness_uausf(a, xl, sl, n_, t_, h_l, h_r, reference_th
     while l < m * n_:
         for k in t_:
             for j in X:
-                H[l] = lib.Boussinesq_one_dimension_unstable_flow_reference_thickness_method(a, j, k, xl, h_l, h_r, reference_thickness, fourier_series)
+                H[l] = lib.Boussinesq_one_dimension_unstable_flow_reference_thickness_method(a, j, k, xl, h_l, h_r,
+                                                                                             reference_thickness,
+                                                                                             fourier_series)
                 l += 1
 
     return_dict[c] = H
-    print(return_dict[c])
+    return return_dict
+
+
+def solve_as_square_uausf(a, xl, sl, n_, t_, h_l, h_r, reference_thickness, c, fourier_series, return_dict):
+    # X轴差分点的数目
+    m = int(xl / sl) + 1
+    # X轴
+    X = np.linspace(0, xl, m)
+    # 所有解值矩阵
+    H = np.zeros((m * n_, 1))
+    # 定义解值矩阵的行数
+    l = 0
+    while l < m * n_:
+        for k in t_:
+            for j in X:
+                H[l] = lib.Boussinesq_one_dimension_unstable_flow_square_method(a, j, k, xl, h_l, h_r,
+                                                                                reference_thickness,
+                                                                                fourier_series)
+                l += 1
+
+    return_dict[c] = H
     return return_dict
 
 
@@ -758,7 +784,8 @@ class Unconfined_aquifer_USF(Unstableflow):
             else:
                 t_ = np.linspace((c * n_) * self.st, self.tl, n - c * n_)
                 n_ = n - c * n_
-            p = Process(target=solve_as_reference_thickness_uausf, args=(self.a, self.xl, self.sl, n_, t_, self.h_l, self.h_r, self.ha, c, fourier_series, return_dict1))
+            p = Process(target=solve_as_reference_thickness_uausf, args=(
+                self.a, self.xl, self.sl, n_, t_, self.h_l, self.h_r, self.ha, c, fourier_series, return_dict1))
             p.start()
             plist.append(p)
         # 多进程运算开始
@@ -773,4 +800,103 @@ class Unconfined_aquifer_USF(Unstableflow):
         for k in range(0, n):  # 对时间进行扫描
             for i in range(0, m):  # 对空间进行扫描
                 H_ALL[k, i] = H[k * m + i]
+        return H_ALL
+
+    def solve_reference_thickness_method(self, fourier_series=20):
+        # 如果未设定压力扩散系数
+        if self.a is None or self.a == '':
+            self.a = self.K / self.Sy
+        # X轴差分点的数目
+        m = int(self.xl / self.sl) + 1
+        # 时间轴差分点的数目
+        n = int(self.tl / self.st) + 1
+        # 创建一个全部值为0的矩阵，用于存放各个与差分位置对等的解析解的水头值
+        H_ALL = np.zeros((n, m))
+        for k in range(0, n):
+            for i in range(0, m):
+                if k != 0:
+                    reference_thickness = H_ALL[k - 1, i]
+                else:
+                    reference_thickness = self.ha
+                h = lib.Boussinesq_one_dimension_unstable_flow_reference_thickness_method(self.a, i, k, self.xl,
+                                                                                          self.h_l, self.h_r,
+                                                                                          reference_thickness,
+                                                                                          fourier_series)
+                H_ALL[k, i] = h
+        return H_ALL
+
+    def solve_square_method_multi(self, cpu_cores=2, fourier_series=20):  # 默认取傅里叶级数前20项，CPU运算核心为两个，多核运行选择
+        # 如果未设定压力扩散系数
+        if self.a is None or self.a == '':
+            self.a = self.K / self.Sy
+        # X轴差分点的数目
+        m = int(self.xl / self.sl) + 1
+        # 时间轴差分点的数目
+        n = int(self.tl / self.st) + 1
+        # 分配到每一个cpu上的数目
+        n_ = n // cpu_cores
+        # 创建一个全部值为0的矩阵，用于存放各个与差分位置对等的解析解的水头值
+        H_ALL = np.zeros((n, m))
+        # 所有解值矩阵
+        H = np.zeros((m * n, 1))
+        # 创建类似字典的跨进程共享对象
+        manager_uausf = Manager()
+        return_dict1 = manager_uausf.dict()
+        # 创建多进程工作列表
+        plist = []
+        # 多进程任务分配
+        for c in range(0, cpu_cores):
+            # 时间轴（以拆分）
+            if c != (cpu_cores - 1):
+                t_ = np.linspace(c * n_ * self.st, (c + 1) * (n_ - 1) * self.st, n_)
+            else:
+                t_ = np.linspace((c * n_) * self.st, self.tl, n - c * n_)
+                n_ = n - c * n_
+            p = Process(target=solve_as_square_uausf, args=(
+                self.a, self.xl, self.sl, n_, t_, self.h_l, self.h_r, self.ha, c, fourier_series, return_dict1))
+            p.start()
+            plist.append(p)
+        # 多进程运算开始
+        for p in plist:
+            p.join()
+        l = 0
+        while l < m * n:
+            for c in range(0, cpu_cores):
+                for h in return_dict1[c]:
+                    H[l] = h
+                    l += 1
+        for k in range(0, n):  # 对时间进行扫描
+            for i in range(0, m):  # 对空间进行扫描
+                H_ALL[k, i] = H[k * m + i]
+        return H_ALL
+
+    def solve_square_method(self, fourier_series=20):
+        # 如果未设定压力扩散系数
+        if self.a is None or self.a == '':
+            self.a = self.K / self.Sy
+        # X轴差分点的数目
+        m = int(self.xl / self.sl) + 1
+        # 时间轴差分点的数目
+        n = int(self.tl / self.st) + 1
+        # 创建一个全部值为0的矩阵，用于存放各个与差分位置对等的解析解的水头值
+        H_ALL = np.zeros((n, m))
+        for k in range(0, n):
+            for i in range(0, m):
+                if i == 0:
+                    ll = self.h_l
+                else:
+                    ll = H_ALL[k-1, i-1]
+                if i == m-1:
+                    rr = self.h_r
+                else:
+                    rr = H_ALL[k-1, i+1]
+                if k != 0:
+                    reference_thickness = 0.5 * self.sl * (rr-ll)/self.sl + ll
+                else:
+                    reference_thickness = self.ha
+                h = lib.Boussinesq_one_dimension_unstable_flow_square_method(self.a, i, k, self.xl,
+                                                                             self.h_l, self.h_r,
+                                                                             reference_thickness,
+                                                                             fourier_series)
+                H_ALL[k, i] = h
         return H_ALL

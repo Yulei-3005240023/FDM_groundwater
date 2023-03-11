@@ -279,7 +279,7 @@ class Unstableflow:
     def initial_condition(self, ic):  # 初始条件的水头设定
         self.ic = float(ic)
 
-    def draw(self, H_ALL: np.ndarray):
+    def draw(self, H_ALL: np.ndarray, title=''):
         # X轴单元格的数目
         m = int(self.xl / self.sl) + 1
         # y轴单元格数目
@@ -315,8 +315,12 @@ class Unstableflow:
 
         ax.set_zlim(minH_z(H_ALL), maxH_z(H_ALL))
         ax.plot_surface(X, Y, H_ALL, linewidth=0, antialiased=True, cmap=plt.get_cmap('rainbow'))
+        ax.set(zlabel='水头（m）', ylabel='Y轴（m）', xlabel='X轴（m）')
         plt.suptitle(self.name_chinese)
-        plt.title("差分数值解(差分步长%s)" % self.sl)
+        if title == '':
+            plt.title("差分数值解(差分空间步长{0}，时间步长{1})".format(self.sl, self.st))
+        else:
+            plt.title(title)
         plt.show()
 
 
@@ -442,15 +446,13 @@ class Unconfined_aquifer_USF(Unstableflow):  # 潜水Boussinesq方程
 
         # 对函数W(x)为源汇项函数除以导水系数
         def W(x, y, t):
-            return eval(self.w) / self.K
+            if self.w == '0':
+                return 0
+            else:
+                return eval(self.w) / self.K
 
         # 创建一个列表来储存所有时刻的水头值
         H_all_time = []
-        # 常数b矩阵
-        H_b = np.zeros((m * n * p, 1))
-        # 系数a矩阵
-        H_a = np.zeros((m * n * p, m * n * p))
-        # 系数a矩阵行数
         l_a = 0
         while l_a < m * n * p:
             for k in range(0, p):  # 对时间进行扫描
@@ -461,48 +463,56 @@ class Unconfined_aquifer_USF(Unstableflow):  # 潜水Boussinesq方程
                     for j in range(0, m):  # 对列进行扫描
                         #  初值设定
                         if k == 0:
-                            H_a[l_a, l_a] = 1
-                            H_b[l_a] = self.ic
+                            H_c[l_c, l_c] = 1
+                            H_d[l_c] = self.ic
                         else:
                             # 上下左右边界赋值
                             if (i - 1) < 0:
-                                H_b[l_a] = H_b[l_a] - self.h_t
+                                H_d[l_c] = H_d[l_c] - self.h_t * (H_all_time[k - 1][i, j] + self.h_t)
+                                tt = self.h_t
+                            else:
+                                tt = H_all_time[k - 1][i - 1, j]
                             if (j - 1) < 0:
-                                H_b[l_a] = H_b[l_a] - self.h_l
+                                H_d[l_c] = H_d[l_c] - self.h_l * (H_all_time[k - 1][i, j] + self.h_l)
+                                ll = self.h_l
+                            else:
+                                ll = H_all_time[k - 1][i, j - 1]
                             if (i + 1) == n:
-                                H_b[l_a] = H_b[l_a] - self.h_b
+                                H_d[l_c] = H_d[l_c] - self.h_b * (H_all_time[k - 1][i, j] + self.h_b)
+                                bb = self.h_b
+                            else:
+                                bb = H_all_time[k - 1][i + 1, j]
                             if (j + 1) == m:
-                                H_b[l_a] = H_b[l_a] - self.h_r
+                                H_d[l_c] = H_d[l_c] - self.h_r * (H_all_time[k - 1][i, j] + self.h_r)
+                                rr = self.h_r
+                            else:
+                                rr = H_all_time[k - 1][i, j + 1]
                             # 给位置为(i-1,j,k)处的水头赋上系数值
                             if (i - 1) >= 0:
-                                H_a[l_a, k * n * m + (i - 1) * m + j] = self.st
+                                H_c[l_c, (i - 1) * m + j] = H_all_time[k - 1][i, j] + H_all_time[k - 1][i - 1, j]
                             # 给位置为(i+1,j,k)处的水头赋上系数值
                             if (i + 1) < n:
-                                H_a[l_a, k * n * m + (i + 1) * m + j] = self.st
+                                H_c[l_c, (i + 1) * m + j] = H_all_time[k - 1][i, j] + H_all_time[k - 1][i + 1, j]
                             # 给位置为(i,j-1,k)处的水头赋上系数值
                             if (j - 1) >= 0:
-                                H_a[l_a, k * n * m + i * m + j - 1] = self.st
+                                H_c[l_c, i * m + j - 1] = H_all_time[k - 1][i, j] + H_all_time[k - 1][i, j - 1]
                             # 给位置为(i,j+1,k)处的水头赋上系数值
                             if (j + 1) < m:
-                                H_a[l_a, k * n * m + i * m + j + 1] = self.st
+                                H_c[l_c, i * m + j + 1] = H_all_time[k - 1][i, j] + H_all_time[k - 1][i, j + 1]
                             # 给位置为(i,j,k)处的水头赋上系数值
-                            H_a[l_a, k * n * m + i * m + j] = -4 * self.st - self.Sy * self.sl * self.sl / (self.K *
-                                                                                                            self.ha)
-                            # 给位置为(i,j,k-1)处的水头赋上系数值
-                            H_a[l_a, (k - 1) * n * m + i * m + j] = self.Sy * self.sl * self.sl / (self.K * self.ha)
+                            H_c[l_c, l_c] = -4 * H_all_time[k - 1][i, j] - rr - ll - bb - tt - 2 * self.sl * self.Sy / (self.K * self.st)
                             # 源汇项赋值
-                            H_b[l_a] = H_b[l_a] - W(j * self.sl, i * self.sl, k * self.st) * self.sl * self.sl * self.st
+                            H_d[l_c] = H_d[l_c] - W(j * self.sl, i * self.sl, k * self.st) * self.sl * self.sl - H_all_time[k - 1][i, j] * (2 * self.sl * self.Sy / (self.K * self.st))
                         l_c += 1
                         l_a += 1
-        # 解矩阵方程
-        H = nla.solve(H_a, H_b)
-        for k in range(0, p):
-            # 创建一个全部值为0的矩阵，用来存放每一个单独时刻的水头值
-            H_ALL = np.zeros((n, m))
-            for i in range(0, n):  # 对行进行扫描
-                for j in range(0, m):  # 对列进行扫描
-                    H_ALL[i, j] = H[k * m * n + i * m + j] + self.ha
-            H_all_time.append(H_ALL)
+                # 解矩阵方程
+                H = nla.solve(H_c, H_d)
+                # 创建一个全部值为0的矩阵，用来存放每一个单独时刻的水头值
+                H_ALL = np.zeros((n, m))
+                for i in range(0, n):  # 对行进行扫描
+                    for j in range(0, m):  # 对列进行扫描
+                        H_ALL[i, j] = H[i * m + j]
+                H_all_time.append(H_ALL)
 
         return H_all_time
 

@@ -107,8 +107,8 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
         wb.save('缓存/' + self.time + '承压含水层一维非稳定流data.xlsx')
 
     def set_time_choose_box(self):  # 设置时刻选择条
-        time_all = int(self.flow.tl / self.flow.st)
-        self.ui.spinBox_time.setMaximum(time_all)
+        time_all = int(self.flow.tl / self.flow.st) + 1
+        self.ui.spinBox_time.setMaximum(time_all - 1)
         self.ui.textBrowser_time.setPlainText(
             '计算时长为：' + str(self.flow.tl) + '天，时间分割步长为：' + str(self.flow.st) + '天，共计有时刻' + str(
                 time_all) + '个。')
@@ -382,7 +382,7 @@ class One_dimension_unconfined_aquifer_unstable_flow(QMainWindow):
         # 数值解方法存放
         self.how_fdm = None
         # 选定时刻存放
-        self.choose_time = None
+        self.time_location = None
         # 程序计算状态
         self.solve_activity = False
         # 监测按钮《计算数值解结果》
@@ -392,7 +392,22 @@ class One_dimension_unconfined_aquifer_unstable_flow(QMainWindow):
         # 监测按钮《计算参考厚度法的解析解结果》
         self.ui.solve_reference_thickness_method.clicked.connect(self.solve_reference_thickness_method)
         # 监测按钮《参考厚度解析解表面图绘图》
-        self.ui.draw_solve_reference_thickness_method_surface.clicked.connect(self.draw_solve_reference_thickness_method_surface)
+        self.ui.draw_solve_reference_thickness_method_surface.clicked.connect(
+            self.draw_solve_reference_thickness_method_surface)
+        # 监测按钮《计算平方法的解析解结果》
+        self.ui.solve_square_method.clicked.connect(self.solve_square_method)
+        # 监测按钮《平方法解析解表面图绘图》
+        self.ui.draw_solve_square_method_surface.clicked.connect(self.draw_solve_square_method_surface)
+        # 监测按钮《绘制选定时刻的数值解线型图》
+        self.ui.draw_solve_line.clicked.connect(self.draw_solve_line)
+        # 监测按钮《绘制选定时刻的参考厚度解析解线型图》
+        self.ui.draw_solve_reference_thickness_line.clicked.connect(self.draw_solve_reference_thickness_line)
+        # 监测按钮《绘制选定时刻的平方打解析解线型图》
+        self.ui.draw_solve_square_line.clicked.connect(self.draw_solve_square_line)
+        # 监测按钮《绘制数值解和解析解对比线型图》
+        self.ui.draw_complete.clicked.connect(self.draw_complete)
+        # 监测按钮《保存日志信息》
+        self.ui.save_date.clicked.connect(self.save_date)
         # 监测按钮《返回上一级》
         self.ui.back.clicked.connect(self.return_main)
         # 获取自编库中的类的用法
@@ -403,12 +418,13 @@ class One_dimension_unconfined_aquifer_unstable_flow(QMainWindow):
         self.time = str(time.strftime("%Y-%m-%d_%H时%M分%S秒", t))
         self.ui.textBrowser.append('程序运行时间（北京时间）：' + str(time.strftime("%Y-%m-%d %H:%M:%S", t)))
         self.ui.textBrowser.append(self.time)
-        wb = openpyxl.Workbook()
-        ws1 = wb.create_sheet('info', 0)
-        ws1.append(
-            ['x轴轴长', '空间差分步长', '相对空间差分步长', 't轴轴长', '时间差分步长', '相对时间差分步长', '左边界',
-             '右边界', '初始条件', '压力扩散系数', '傅里叶级数', '平均相对误差', '均方误差', '数值解差分格式'])
-        wb.save('缓存/' + self.time + '潜水含水层一维非稳定流data.xlsx')
+
+    def set_time_choose_box(self):  # 设置时刻选择条
+        time_all = int(self.flow.tl / self.flow.st) + 1
+        self.ui.spinBox_time.setMaximum(time_all - 1)
+        self.ui.textBrowser_time.setPlainText(
+            '计算时长为：' + str(self.flow.tl) + '天，时间分割步长为：' + str(self.flow.st) + '天，共计有时刻' + str(
+                time_all) + '个。')
 
     def solve(self):
         self.flow.l_boundary(self.ui.l_boundary.toPlainText())
@@ -446,6 +462,8 @@ class One_dimension_unconfined_aquifer_unstable_flow(QMainWindow):
         self.solve_fdm = self.flow.solve()
         end_time = time.perf_counter()
         self.ui.textBrowser.append('计算完毕，用时' + str(end_time - start_time) + '秒')
+        # 设置时刻选择条
+        self.set_time_choose_box()
 
     def solve_reference_thickness_method(self):
         self.flow.l_boundary(self.ui.l_boundary.toPlainText())
@@ -474,7 +492,7 @@ class One_dimension_unconfined_aquifer_unstable_flow(QMainWindow):
         # 获取当前系统时间戳
         t = time.localtime()
         self.ui.textBrowser.append(str(time.strftime("%H:%M:%S", t)))
-        self.ui.textBrowser.append('正在进行解析解求解')
+        self.ui.textBrowser.append('正在使用参考厚度法进行解析解求解')
         self.ui.textBrowser.append(
             '傅里叶级数解（傅里叶级数取前' + str(self.fourier_series) + '项)，' + '分配CPU核心' + str(
                 self.cpu_cores) + '个')
@@ -484,10 +502,62 @@ class One_dimension_unconfined_aquifer_unstable_flow(QMainWindow):
             '空间差分步长：' + str(self.flow.sl) + ' 时间差分步长：' + str(self.flow.st))
         self.ui.textBrowser.append('压力扩散系数:' + self.pressure_diffusion_coefficient)
         start_time = time.perf_counter()
-        self.solve_as0 = self.flow.solve_reference_thickness_method_multi(fourier_series=self.fourier_series,
-                                                                          cpu_cores=self.cpu_cores)
+        if self.ui.checkBox.isChecked():
+            self.solve_as0 = self.flow.solve_reference_thickness_method(fourier_series=self.fourier_series)
+        else:
+            self.solve_as0 = self.flow.solve_reference_thickness_method_multi(fourier_series=self.fourier_series,
+                                                                              cpu_cores=self.cpu_cores)
         end_time = time.perf_counter()
         self.ui.textBrowser.append('计算完毕，用时' + str(end_time - start_time) + '秒')
+        # 设置时刻选择条
+        self.set_time_choose_box()
+
+    def solve_square_method(self):
+        self.flow.l_boundary(self.ui.l_boundary.toPlainText())
+        self.flow.r_boundary(self.ui.r_boundary.toPlainText())
+        self.flow.step_length(self.ui.step_length.toPlainText())
+        self.flow.step_time(self.ui.step_time.toPlainText())
+        self.flow.x_length(self.ui.x_length.toPlainText())
+        self.flow.t_length(self.ui.t_length.toPlainText())
+        self.flow.reference_thickness(self.ui.reference_thickness.toPlainText())
+        self.fourier_series = self.ui.spinBox_fourier_series.value()
+        self.cpu_cores = self.ui.verticalSlider.value()
+        # 相对空间差分步长和相对时间差分步长的设定
+        self.relative_step_length = self.flow.sl / self.flow.xl
+        self.relative_step_time = self.flow.st / self.flow.tl
+        # 压力扩散系数的设定
+        self.pressure_diffusion_coefficient = self.ui.pressure_diffusion_coefficient.toPlainText()
+        # 判断填写的是压力模量系数还是导水系数和贮水系数
+        if self.ui.pressure_diffusion_coefficient.toPlainText() == '':
+            self.flow.specific_yield(self.ui.specific_yield.toPlainText())
+            self.flow.hydraulic_conductivity(self.ui.hydraulic_conductivity.toPlainText())
+            self.flow.leakage_recharge(self.ui.leakage_recharge.toPlainText())
+        else:
+            self.flow.pressure_diffusion_coefficient(self.ui.pressure_diffusion_coefficient.toPlainText())
+            self.flow.hydraulic_conductivity(1)
+            self.flow.leakage_recharge("0")
+        # 获取当前系统时间戳
+        t = time.localtime()
+        self.ui.textBrowser.append(str(time.strftime("%H:%M:%S", t)))
+        self.ui.textBrowser.append('正在使用平方法进行解析解求解')
+        self.ui.textBrowser.append(
+            '傅里叶级数解（傅里叶级数取前' + str(self.fourier_series) + '项)，' + '分配CPU核心' + str(
+                self.cpu_cores) + '个')
+        self.ui.textBrowser.append(
+            '相对空间差分步长：' + str(self.relative_step_length) + '相对时间差分步长：' + str(self.relative_step_time))
+        self.ui.textBrowser.append(
+            '空间差分步长：' + str(self.flow.sl) + ' 时间差分步长：' + str(self.flow.st))
+        self.ui.textBrowser.append('压力扩散系数:' + self.pressure_diffusion_coefficient)
+        start_time = time.perf_counter()
+        if self.ui.checkBox.isChecked():
+            self.solve_as1 = self.flow.solve_square_method(fourier_series=self.fourier_series)
+        else:
+            self.solve_as1 = self.flow.solve_square_method_multi(fourier_series=self.fourier_series,
+                                                                 cpu_cores=self.cpu_cores)
+        end_time = time.perf_counter()
+        self.ui.textBrowser.append('计算完毕，用时' + str(end_time - start_time) + '秒')
+        # 设置时刻选择条
+        self.set_time_choose_box()
 
     def draw_solve_surface(self):
         title = '数值解，空间差分步长为' + str(self.flow.sl) + '时间差分步长为' + str(self.flow.st)
@@ -496,6 +566,51 @@ class One_dimension_unconfined_aquifer_unstable_flow(QMainWindow):
     def draw_solve_reference_thickness_method_surface(self):
         title = '参考厚度法解析解，空间差分步长为' + str(self.flow.sl) + '时间差分步长为' + str(self.flow.st)
         self.flow.draw_surface(self.solve_as0, title=title)
+
+    def draw_solve_square_method_surface(self):
+        title = '平方法解析解，空间差分步长为' + str(self.flow.sl) + '时间差分步长为' + str(self.flow.st)
+        self.flow.draw_surface(self.solve_as1, title=title)
+
+    def draw_solve_line(self):
+        self.time_location = self.ui.spinBox_time.value()
+        title = '数值解，空间差分步长为' + str(self.flow.sl) + '时间差分步长为' + str(
+            self.flow.st) + '，绘图时刻为第' + str(self.time_location) + '时刻'
+        self.flow.draw(self.solve_fdm, time=self.time_location, title=title)
+        self.ui.textBrowser.append('第' + str(self.time_location) + '时刻数值解绘图，当前时刻各点解值为：')
+        self.ui.textBrowser.append(str(self.solve_fdm[self.time_location]))
+
+    def draw_solve_reference_thickness_line(self):
+        self.time_location = self.ui.spinBox_time.value()
+        title = '参考厚度法解析解，空间差分步长为' + str(self.flow.sl) + '时间差分步长为' + str(
+            self.flow.st) + '，绘图时刻为第' + str(self.time_location) + '时刻'
+        self.flow.draw(self.solve_as0, time=self.time_location, title=title)
+        self.ui.textBrowser.append('第' + str(self.time_location) + '时刻参考厚度法解析解解绘图，当前时刻各点解值为：')
+        self.ui.textBrowser.append(str(self.solve_as0[self.time_location]))
+
+    def draw_solve_square_line(self):
+        self.time_location = self.ui.spinBox_time.value()
+        title = '平方法解析解，空间差分步长为' + str(self.flow.sl) + '时间差分步长为' + str(
+            self.flow.st) + '，绘图时刻为第' + str(self.time_location) + '时刻'
+        self.flow.draw(self.solve_as1, time=self.time_location, title=title)
+        self.ui.textBrowser.append('第' + str(self.time_location) + '时刻平方法解析解绘图，当前时刻各点解值为：')
+        self.ui.textBrowser.append(str(self.solve_as1[self.time_location]))
+
+    def draw_complete(self):
+        self.time_location = self.ui.spinBox_time.value()
+        title = '数值解和傅里叶级数解，空间差分步长为' + str(self.flow.sl) + '时间差分步长为' + str(
+            self.flow.st) + '，绘图时刻为第' + str(self.time_location) + '时刻'
+        self.flow.draw_complete(self.solve_fdm, self.solve_as0, self.solve_as1, time=self.time_location, title=title,
+                                label0='数值解',
+                                label1='参考厚度法解析解', label2='平方法解析解')
+
+    def save_date(self):
+        # 获取当前系统时间戳
+        t = time.localtime()
+        filepath = QFileDialog.getExistingDirectory(self.ui, "选择文件存储路径")
+        f_ = filepath + '/日志' + str(time.strftime("%Y-%m-%d_%H时%M分%S秒，潜水含水层一维非稳定流", t)) + '.txt'
+        file = open(f_, 'w')
+        file.write(self.ui.textBrowser.toPlainText())
+        file.close()
 
     def return_main(self):
         self.ui.close()
@@ -627,13 +742,11 @@ class Two_dimension_unconfined_aquifer_unstable_flow(QMainWindow):
         self.ui = QUiLoader().load("ui/tduausf.ui")
         self.ui.setWindowIcon(QIcon("water.ico"))
         # 监测按钮《计算并绘图》
-        self.ui.draw.clicked.connect(self.flow_draw)
+        self.ui.solve.clicked.connect(self.solve)
+        # 监测按钮《绘制选定时刻的数值解表面图》
+        self.ui.draw_solve_surface.clicked.connect(self.draw_solve_surface)
         # 监测按钮《返回上一级》
         self.ui.back.clicked.connect(self.return_main)
-        # 监测按钮《上一时刻》
-        self.ui.previous_time.clicked.connect(self.previous_time)
-        # 监测按钮《下一时刻》
-        self.ui.next_time.clicked.connect(self.next_time)
         # 获取自编库中的类的用法
         self.flow = ft.Unconfined_aquifer_USF()
         # 存储水头解值的列表
@@ -641,7 +754,14 @@ class Two_dimension_unconfined_aquifer_unstable_flow(QMainWindow):
         self.time_location = 0  # 时刻位置
         self.time_all = 0  # 抛开初始时刻的所有时刻个数
 
-    def flow_draw(self):
+    def set_time_choose_box(self):  # 设置时刻选择条
+        time_all = int(self.flow.tl / self.flow.st) + 1
+        self.ui.spinBox_time.setMaximum(time_all - 1)
+        self.ui.textBrowser_time.setPlainText(
+            '计算时长为：' + str(self.flow.tl) + '天，时间分割步长为：' + str(self.flow.st) + '天，共计有时刻' + str(
+                time_all) + '个。')
+
+    def solve(self):
         self.flow.l_boundary(self.ui.l_boundary.toPlainText())
         self.flow.r_boundary(self.ui.r_boundary.toPlainText())
         self.flow.t_boundary(self.ui.t_boundary.toPlainText())
@@ -654,28 +774,25 @@ class Two_dimension_unconfined_aquifer_unstable_flow(QMainWindow):
         self.flow.initial_condition(self.ui.initial_condition.toPlainText())
         self.flow.specific_yield(self.ui.storativity.toPlainText())
         self.flow.hydraulic_conductivity(self.ui.hydraulic_conductivity.toPlainText())
-        self.flow.reference_thickness(self.ui.reference_thickness.toPlainText())
         self.flow.leakage_recharge(self.ui.leakage_recharge.toPlainText())
+        # 获取当前系统时间戳
+        t = time.localtime()
+        self.ui.textBrowser.append(str(time.strftime("%H:%M:%S", t)))
+        self.ui.textBrowser.append('正在进行数值解求解')
+        self.ui.textBrowser.append(
+            '空间差分步长：' + str(self.flow.sl) + ' 时间差分步长：' + str(self.flow.st))
+        start_time = time.perf_counter()
         self.h_all_time = self.flow.solve()
-        self.flow.draw(self.h_all_time[0])  # 绘制初始时刻的水头值
-        self.time_all = len(self.h_all_time) - 1
-        self.time_location = 0
-        self.ui.progressBar.reset()
-        self.ui.progressBar.setValue(0)  # 进度条置为0
+        end_time = time.perf_counter()
+        self.ui.textBrowser.append('计算完毕，用时' + str(end_time - start_time) + '秒')
+        # 设置时刻选择条
+        self.set_time_choose_box()
 
-    def next_time(self):
-        self.time_location += 1
-        self.flow.draw(self.h_all_time[self.time_location])
-        self.ui.progressBar.reset()
-        T = int((self.time_location / self.time_all) * 100)
-        self.ui.progressBar.setValue(T)  # 设置进度条进度
-
-    def previous_time(self):
-        self.time_location -= 1
-        self.flow.draw(self.h_all_time[self.time_location])
-        self.ui.progressBar.reset()
-        T = int((self.time_location / self.time_all) * 100)
-        self.ui.progressBar.setValue(T)  # 设置进度条进度
+    def draw_solve_surface(self):
+        self.time_location = self.ui.spinBox_time.value()
+        title = '数值解，空间差分步长为' + str(self.flow.sl) + '时间差分步长为' + str(
+            self.flow.st) + '，绘图时刻为第' + str(self.time_location) + '时刻'
+        self.flow.draw(self.h_all_time[self.time_location], title=title)
 
     def return_main(self):
         self.ui.close()

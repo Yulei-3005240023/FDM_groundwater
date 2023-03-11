@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1180</width>
-    <height>792</height>
+    <width>1229</width>
+    <height>808</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -114,7 +114,7 @@
    <property name="geometry">
     <rect>
      <x>380</x>
-     <y>230</y>
+     <y>228</y>
      <width>371</width>
      <height>81</height>
     </rect>
@@ -404,7 +404,7 @@ p, li { white-space: pre-wrap; }
      <x>820</x>
      <y>40</y>
      <width>318</width>
-     <height>100</height>
+     <height>111</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -455,6 +455,13 @@ p, li { white-space: pre-wrap; }
       </property>
      </widget>
     </item>
+    <item>
+     <widget class="QPushButton" name="draw_solve_square_method_surface">
+      <property name="text">
+       <string>平方法解析解表面图绘图</string>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QWidget" name="verticalLayoutWidget_5">
@@ -470,7 +477,7 @@ p, li { white-space: pre-wrap; }
     <item>
      <widget class="QPushButton" name="save_date">
       <property name="text">
-       <string>保存日志信息并生成关于误差的xlsx文件</string>
+       <string>保存日志信息</string>
       </property>
      </widget>
     </item>
@@ -624,6 +631,22 @@ p, li { white-space: pre-wrap; }
      </widget>
     </item>
    </layout>
+  </widget>
+  <widget class="QCheckBox" name="checkBox">
+   <property name="geometry">
+    <rect>
+     <x>1020</x>
+     <y>160</y>
+     <width>316</width>
+     <height>19</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>解析解迭代参考厚度</string>
+   </property>
+   <property name="tristate">
+    <bool>false</bool>
+   </property>
   </widget>
  </widget>
  <resources/>
