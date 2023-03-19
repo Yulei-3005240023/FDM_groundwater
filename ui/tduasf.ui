@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>802</width>
-    <height>668</height>
+    <width>972</width>
+    <height>711</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -34,8 +34,8 @@
     <rect>
      <x>10</x>
      <y>40</y>
-     <width>371</width>
-     <height>89</height>
+     <width>601</width>
+     <height>51</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
@@ -59,9 +59,9 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>130</y>
-     <width>371</width>
-     <height>89</height>
+     <y>90</y>
+     <width>601</width>
+     <height>61</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -84,8 +84,8 @@
   <widget class="QWidget" name="verticalLayoutWidget">
    <property name="geometry">
     <rect>
-     <x>610</x>
-     <y>560</y>
+     <x>760</x>
+     <y>540</y>
      <width>160</width>
      <height>80</height>
     </rect>
@@ -110,10 +110,10 @@
   <widget class="QWidget" name="horizontalLayoutWidget_5">
    <property name="geometry">
     <rect>
-     <x>380</x>
-     <y>40</y>
-     <width>371</width>
-     <height>89</height>
+     <x>10</x>
+     <y>150</y>
+     <width>601</width>
+     <height>51</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -301,32 +301,6 @@ p, li { white-space: pre-wrap; }
      <widget class="QTextEdit" name="y_length">
       <property name="placeholderText">
        <string>Y轴轴长的设定，输入整数或者浮点数</string>
-      </property>
-     </widget>
-    </item>
-   </layout>
-  </widget>
-  <widget class="QWidget" name="horizontalLayoutWidget_6">
-   <property name="geometry">
-    <rect>
-     <x>380</x>
-     <y>130</y>
-     <width>371</width>
-     <height>89</height>
-    </rect>
-   </property>
-   <layout class="QHBoxLayout" name="horizontalLayout_6">
-    <item>
-     <widget class="QLabel" name="label_7">
-      <property name="text">
-       <string> 参考厚度</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QTextEdit" name="transmissivity_2">
-      <property name="placeholderText">
-       <string>潜水含水层参考厚度的设定，使用参考厚度法来简化方程，输入整数或者浮点数</string>
       </property>
      </widget>
     </item>

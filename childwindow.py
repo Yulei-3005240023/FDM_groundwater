@@ -668,7 +668,6 @@ class Two_dimension_unconfined_aquifer_stable_flow(QMainWindow):
         self.flow.step_length(self.ui.step_length.toPlainText())
         self.flow.x_length(self.ui.x_length.toPlainText())
         self.flow.y_length(self.ui.y_length.toPlainText())
-        self.flow.reference_thickness(self.ui.reference_thickness.toPlainText())
         self.flow.draw(self.flow.solve())
 
     def return_main(self):

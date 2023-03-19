@@ -3,6 +3,7 @@ import numpy as np
 import sympy as sy
 from sympy import symbols
 import numpy.linalg as nla
+import os
 import matplotlib
 
 matplotlib.use('QtAgg')
@@ -10,9 +11,10 @@ import matplotlib.pyplot as plt
 
 from ctypes import cdll, c_double, c_int
 
+path_lib = os.getcwd() + '\FDMundergroundwater\juas.dll'
+
 # 加载动态链接库
-lib = cdll.LoadLibrary(
-    'F:\PythonProject\FDM_undergroundwater\FDMundergroundwater\juas.so')  # 加载动态链接库
+lib = cdll.LoadLibrary(path_lib)  # 加载动态链接库
 
 # 给定函数参数类型
 lib.M.argtypes = [c_double, c_double, c_double, c_double, c_int]
@@ -513,7 +515,7 @@ class Confined_aquifer_USF(Unstableflow):
                 H_ALL[k, i] = H[k * m + i]
         return H_ALL
 
-    def solve_cn(self):  # 使用有限差分法对该非稳定流方程进行求解
+    def solve_cn(self):  # 使用Crank-Nicolson中心差分对该非稳定流方程进行求解
         # 如果未设定压力扩散系数
         if self.a is None or self.a == '':
             self.a = self.T / self.S

@@ -43,10 +43,10 @@ class Stableflow:
     def y_length(self, yl):  # Y轴轴长
         self.yl = float(yl)
 
-    def draw(self, H_ALL: np.ndarray):
+    def draw(self, H_ALL: np.ndarray, title=''):
         # X轴单元格的数目
         m = int(self.xl / self.sl) + 1
-        # Y轴单元格的数目
+        # y轴单元格数目
         n = int(self.yl / self.sl) + 1
         # X轴
         X = np.linspace(0, self.xl, m)
@@ -79,8 +79,12 @@ class Stableflow:
 
         ax.set_zlim(minH_z(H_ALL), maxH_z(H_ALL))
         ax.plot_surface(X, Y, H_ALL, linewidth=0, antialiased=True, cmap=plt.get_cmap('rainbow'))
+        ax.set(zlabel='水头（m）', ylabel='Y轴（m）', xlabel='X轴（m）')
         plt.suptitle(self.name_chinese)
-        plt.title("差分数值解(差分步长%s)" % self.sl)
+        if title == '':
+            plt.title("差分数值解(差分空间步长{0})".format(self.sl))
+        else:
+            plt.title(title)
         plt.show()
 
 
@@ -183,7 +187,7 @@ class Unconfined_aquifer_SF(Stableflow):
 
         # 对函数W(x)为源汇项函数除以渗透系数和参考厚度
         def W(x, y):
-            return eval(self.w) / (self.K * self.ha)
+            return eval(self.w) / (self.K * 0.5)
 
         # 创建一个全部值为0的矩阵
         H_ALL = np.zeros((n, m))
@@ -198,13 +202,13 @@ class Unconfined_aquifer_SF(Stableflow):
                 for j in range(0, m):  # 对列进行扫描
                     # 上下左右边界赋值
                     if (i - 1) < 0:
-                        H_b[l_a] = H_b[l_a] - self.h_t
+                        H_b[l_a] = H_b[l_a] - self.h_t * self.h_t
                     if (j - 1) < 0:
-                        H_b[l_a] = H_b[l_a] - self.h_l
+                        H_b[l_a] = H_b[l_a] - self.h_l * self.h_l
                     if (i + 1) == n:
-                        H_b[l_a] = H_b[l_a] - self.h_b
+                        H_b[l_a] = H_b[l_a] - self.h_b * self.h_b
                     if (j + 1) == m:
-                        H_b[l_a] = H_b[l_a] - self.h_r
+                        H_b[l_a] = H_b[l_a] - self.h_r * self.h_r
                     # 给位置为(i-1,j)处的水头赋上系数值
                     if (i - 1) >= 0:
                         H_a[l_a, (i - 1) * m + j] = 1
@@ -226,7 +230,7 @@ class Unconfined_aquifer_SF(Stableflow):
         H = nla.solve(H_a, H_b)
         for i in range(0, n):  # 对行进行扫描
             for j in range(0, m):  # 对列进行扫描
-                H_ALL[i, j] = H[i * m + j] + self.ha
+                H_ALL[i, j] = H[i * m + j] ** 0.5
 
         return H_ALL
 
