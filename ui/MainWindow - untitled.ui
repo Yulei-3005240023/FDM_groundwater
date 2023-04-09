@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>947</width>
-    <height>592</height>
+    <width>940</width>
+    <height>560</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -131,8 +131,8 @@
      <rect>
       <x>330</x>
       <y>10</y>
-      <width>581</width>
-      <height>511</height>
+      <width>580</width>
+      <height>500</height>
      </rect>
     </property>
     <property name="currentIndex">
@@ -175,6 +175,14 @@
        </property>
        <property name="whatsThis">
         <string>差分格式</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>差分步长</string>
+       </property>
+       <property name="whatsThis">
+        <string>差分步长</string>
        </property>
       </item>
       <item>
@@ -264,8 +272,119 @@
         <string>导水系数</string>
        </property>
       </item>
+      <item>
+       <property name="text">
+        <string>源汇项函数</string>
+       </property>
+       <property name="whatsThis">
+        <string>源汇项函数</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>参考厚度</string>
+       </property>
+       <property name="whatsThis">
+        <string>参考厚度</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>初始条件</string>
+       </property>
+       <property name="whatsThis">
+        <string>初始条件</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>定水头边界</string>
+       </property>
+       <property name="whatsThis">
+        <string>定水头边界</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Dupuit假设</string>
+       </property>
+      </item>
      </widget>
      <widget class="QTextBrowser" name="textBrowser_1">
+      <property name="geometry">
+       <rect>
+        <x>250</x>
+        <y>0</y>
+        <width>321</width>
+        <height>480</height>
+       </rect>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_4">
+     <attribute name="title">
+      <string>可以进行的实验</string>
+     </attribute>
+     <widget class="QListWidget" name="listWidget">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>241</width>
+        <height>351</height>
+       </rect>
+      </property>
+      <item>
+       <property name="text">
+        <string>承压含水层一维稳定流抛物线型解</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>承压含水层一维稳定流对数线性解</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>潜水含水层一维稳定流分水岭</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>对比承压含水层一维非稳定流的解析解和数值解</string>
+       </property>
+       <property name="whatsThis">
+        <string>对比承压含水层一维非稳定流的解析解和数值解</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>对比潜水含水层一维非稳定流的解析解和数值解</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>使用水均衡功能计算和分析边界的流量</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>体验难以计算解析解的地下水水流模型</string>
+       </property>
+       <property name="whatsThis">
+        <string>体验难以计算解析解的地下水水流模型</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>体验没有解析解的地下水水流模型</string>
+       </property>
+       <property name="whatsThis">
+        <string>体验没有解析解的地下水水流模型</string>
+       </property>
+      </item>
+     </widget>
+     <widget class="QTextBrowser" name="textBrowser">
       <property name="geometry">
        <rect>
         <x>250</x>
@@ -283,7 +402,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>947</width>
+     <width>940</width>
      <height>26</height>
     </rect>
    </property>
@@ -298,20 +417,44 @@
     <property name="title">
      <string>    开始   </string>
     </property>
-    <addaction name="actionni"/>
+    <addaction name="save_project"/>
+    <addaction name="open_project"/>
    </widget>
    <widget class="QMenu" name="menu_2">
     <property name="title">
-     <string>     帮助     </string>
+     <string>   设置   </string>
+    </property>
+    <addaction name="actionSet_fourier_series"/>
+    <addaction name="actionSet_cpu_cores"/>
+   </widget>
+   <widget class="QMenu" name="menu_3">
+    <property name="title">
+     <string>   帮助   </string>
     </property>
    </widget>
    <addaction name="menu"/>
    <addaction name="menu_2"/>
+   <addaction name="menu_3"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionni">
+  <action name="save_project">
    <property name="text">
-    <string>ni</string>
+    <string>保存为工程文件</string>
+   </property>
+  </action>
+  <action name="actionSet_fourier_series">
+   <property name="text">
+    <string>傅里叶级数</string>
+   </property>
+  </action>
+  <action name="open_project">
+   <property name="text">
+    <string>打开工程文件</string>
+   </property>
+  </action>
+  <action name="actionSet_cpu_cores">
+   <property name="text">
+    <string>分配解析解计算核心</string>
    </property>
   </action>
  </widget>

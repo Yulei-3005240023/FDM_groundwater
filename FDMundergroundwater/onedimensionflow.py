@@ -149,9 +149,7 @@ class Unconfined_aquifer_SF(Stableflow):
         self.w = None
         self.K = None
         self.ha = None
-
-    def reference_thickness(self, ha):  # 潜水含水层的参考厚度，使用参考厚度法来简化该方程
-        self.ha = float(ha)
+        self.name_chinese = '潜水含水层一维稳定流'
 
     def hydraulic_conductivity(self, K: str):  # 潜水含水层渗透系数的设定，可以为一个常数也可以为带有前缀为sy.的函数,如sy.sin(x)
         self.K = K
@@ -165,7 +163,7 @@ class Unconfined_aquifer_SF(Stableflow):
 
         # 对于K(x)，定义为渗透系数K乘以参考厚度ha
         def K(x):
-            return eval(self.K) * self.ha
+            return eval(self.K) * 0.5
 
         # 对源汇项函数W(x)
         def W(x):
@@ -184,9 +182,10 @@ class Unconfined_aquifer_SF(Stableflow):
             H_b[i] = H_b[i] - W(i * self.sl) * (self.sl * self.sl)
             # 左右边界赋值
             if (i - 1) < 0:
-                H_b[i] = H_b[i] - (K(i * self.sl) - self.sl * (sy.diff(K(x), x).subs(x, i * self.sl))) * self.h_l
+                H_b[i] = H_b[i] - (
+                        K(i * self.sl) - self.sl * (sy.diff(K(x), x).subs(x, i * self.sl))) * self.h_l * self.h_l
             if (i + 1) == m:
-                H_b[i] = H_b[i] - K(i * self.sl) * self.h_r
+                H_b[i] = H_b[i] - K(i * self.sl) * self.h_r * self.h_r
             # 给位置为(i-1)处的水头赋上系数值
             if (i - 1) >= 0:
                 H_a[i, (i - 1)] = K(i * self.sl) - (self.sl * sy.diff(K(x), x).subs(x, i * self.sl))
@@ -198,7 +197,7 @@ class Unconfined_aquifer_SF(Stableflow):
         # 解矩阵方程
         H = nla.solve(H_a, H_b)
         for i in range(0, m):
-            H_ALL[i] = H[i] + self.ha
+            H_ALL[i] = H[i] ** 0.5
         return H_ALL
 
 
@@ -212,7 +211,7 @@ class Unstableflow:
         self.sl = None
         self.h_r = None
         self.h_l = None
-        tl = self.tl
+        self.B = 1  # 默认一维流的宽度为1个单位
 
     def l_boundary(self, h_l, Dirichlet=True, Neumann=False, Robin=False):  # 左边界
         if Dirichlet:
@@ -236,6 +235,9 @@ class Unstableflow:
 
     def initial_condition(self, ic):  # 初始条件的水头设定
         self.ic = float(ic)
+
+    def width(self, B):  # 含水层宽度的设定
+        self.B = float(B)
 
     def draw(self, H_ALL: np.ndarray, time=0, title=''):  # 按给定的时刻绘制水头曲线
         # X轴单元格的数目
@@ -287,7 +289,7 @@ class Unstableflow:
         plt.rcParams['axes.unicode_minus'] = False
         fig = plt.figure(figsize=(10, 7))
         ax = fig.add_subplot()
-        ax.plot(X, H_ALL0[time], linewidth=1, antialiased=True, color='green', label=label0)
+        ax.scatter(X, H_ALL0[time], linewidth=0.0005, antialiased=True, color='green', label=label0)
         if H_ALL1 is not None:
             ax.plot(X, H_ALL1[time], linewidth=1, antialiased=True, color='red', label=label1)
         if H_ALL2 is not None:
@@ -381,7 +383,7 @@ def solve_as_causf(a, xl, sl, n_, t_, h_l, h_r, ic, c, fourier_series, return_di
         for k in t_:
             for j in X:
                 H[l] = (h_l - ic) * lib.M(a, j, k, xl, fourier_series) + (h_r - ic) * lib.M(a, xl - j, k, xl,
-                                                                                            fourier_series)  # M(xl - j, k)  # + N(j)
+                                                                                            fourier_series)
                 l += 1
 
     return_dict[c] = H
@@ -671,6 +673,50 @@ class Confined_aquifer_USF(Unstableflow):
                 H_ALL[k, i] = H[k * m + i] + self.ic
         return H_ALL
 
+    def hydrological_budget(self, H_ALL: np.ndarray, time_start: int, time_end: int):  # 水均衡计算代码
+        # X轴差分点的数目
+        m = int(self.xl / self.sl) + 1
+        left_boundary_quality = 0  # 左边界流量（单宽流量）
+        for i in range(time_start, time_end + 1):
+            if i == time_start:
+                left_boundary_quality += (H_ALL[i, 1] - H_ALL[i, 0]) * self.T * self.st * 0.5
+            elif i == time_end:
+                left_boundary_quality += (H_ALL[i, 1] - H_ALL[i, 0]) * self.T * self.st * 0.5
+            else:
+                left_boundary_quality += (H_ALL[i, 1] - H_ALL[i, 0]) * self.T * self.st
+        right_boundary_quality = 0  # 右边界流量（单宽流量）
+        for i in range(time_start, time_end + 1):
+            if i == time_start:
+                right_boundary_quality += (H_ALL[i, m - 2] - H_ALL[i, m - 1]) * self.T * self.st * 0.5
+            elif i == time_end:
+                right_boundary_quality += (H_ALL[i, m - 2] - H_ALL[i, m - 1]) * self.T * self.st * 0.5
+            else:
+                right_boundary_quality += (H_ALL[i, m - 2] - H_ALL[i, m - 1]) * self.T * self.st
+        return [left_boundary_quality * self.B, right_boundary_quality * self.B]
+
+    def hydrological_budget_analytic_solution(self, H_ALL: np.ndarray, time_start: int, time_end: int):  # 水均衡计算代码
+        # X轴差分点的数目
+        m = int(self.xl / self.sl) + 1
+        H_ALL[0, 0] = self.ic  # 解析解边值点矫正，这两个点的位置不影响水头计算，但是影响水均衡计算
+        H_ALL[0, m - 1] = self.ic
+        left_boundary_quality = 0  # 左边界流量（单宽流量）
+        for i in range(time_start, time_end + 1):
+            if i == time_start:
+                left_boundary_quality += (H_ALL[i, 1] - H_ALL[i, 0]) * self.T * self.st * 0.5
+            elif i == time_end:
+                left_boundary_quality += (H_ALL[i, 1] - H_ALL[i, 0]) * self.T * self.st * 0.5
+            else:
+                left_boundary_quality += (H_ALL[i, 1] - H_ALL[i, 0]) * self.T * self.st
+        right_boundary_quality = 0  # 右边界流量（单宽流量）
+        for i in range(time_start, time_end + 1):
+            if i == time_start:
+                right_boundary_quality += (H_ALL[i, m - 2] - H_ALL[i, m - 1]) * self.T * self.st * 0.5
+            elif i == time_end:
+                right_boundary_quality += (H_ALL[i, m - 2] - H_ALL[i, m - 1]) * self.T * self.st * 0.5
+            else:
+                right_boundary_quality += (H_ALL[i, m - 2] - H_ALL[i, m - 1]) * self.T * self.st
+        return [left_boundary_quality * self.B, right_boundary_quality * self.B]
+
 
 class Unconfined_aquifer_USF(Unstableflow):
     def __init__(self):
@@ -679,6 +725,7 @@ class Unconfined_aquifer_USF(Unstableflow):
         self.K = None
         self.w = None
         self.a = None
+        self.a_as = None
         self.ha = None
         self.name_chinese = '潜水含水层非稳定一维流'
 
@@ -761,8 +808,8 @@ class Unconfined_aquifer_USF(Unstableflow):
 
     def solve_reference_thickness_method_multi(self, cpu_cores=2, fourier_series=20):  # 默认取傅里叶级数前20项，CPU运算核心为两个，多核运行选择
         # 如果未设定压力扩散系数
-        if self.a is None or self.a == '':
-            self.a = self.K / self.Sy
+        if self.a_as is None or self.a_as == '':
+            self.a_as = self.K * self.ha / self.Sy
         # X轴差分点的数目
         m = int(self.xl / self.sl) + 1
         # 时间轴差分点的数目
@@ -787,7 +834,7 @@ class Unconfined_aquifer_USF(Unstableflow):
                 t_ = np.linspace((c * n_) * self.st, self.tl, n - c * n_)
                 n_ = n - c * n_
             p = Process(target=solve_as_reference_thickness_uausf, args=(
-                self.a, self.xl, self.sl, n_, t_, self.h_l, self.h_r, self.ha, c, fourier_series, return_dict1))
+                self.a_as, self.xl, self.sl, n_, t_, self.h_l, self.h_r, self.ha, c, fourier_series, return_dict1))
             p.start()
             plist.append(p)
         # 多进程运算开始
@@ -806,31 +853,41 @@ class Unconfined_aquifer_USF(Unstableflow):
 
     def solve_reference_thickness_method(self, fourier_series=20):
         # 如果未设定压力扩散系数
-        if self.a is None or self.a == '':
-            self.a = self.K / self.Sy
+        if self.a_as is None or self.a_as == '':
+            self.a_as = (self.K * self.ha) / self.Sy
         # X轴差分点的数目
         m = int(self.xl / self.sl) + 1
         # 时间轴差分点的数目
         n = int(self.tl / self.st) + 1
+        # X轴
+        X = np.linspace(0, self.xl, m)
+        # 时间轴
+        T = np.linspace(0, self.tl, n)
+        # 所有解值矩阵
+        H = np.zeros((m * n, 1))
         # 创建一个全部值为0的矩阵，用于存放各个与差分位置对等的解析解的水头值
         H_ALL = np.zeros((n, m))
-        for k in range(0, n):
-            for i in range(0, m):
-                if k != 0:
-                    reference_thickness = H_ALL[k - 1, i]
-                else:
-                    reference_thickness = self.ha
-                h = lib.Boussinesq_one_dimension_unstable_flow_reference_thickness_method(self.a, i, k, self.xl,
+        # 所有解值矩阵的行数
+        l = 0
+        for k in T:
+            for i in X:
+                h = lib.Boussinesq_one_dimension_unstable_flow_reference_thickness_method(self.a_as, i, k, self.xl,
                                                                                           self.h_l, self.h_r,
-                                                                                          reference_thickness,
+                                                                                          self.ha,
                                                                                           fourier_series)
-                H_ALL[k, i] = h
+
+                H[l] = h
+                l += 1
+
+        for k in range(0, n):  # 对时间进行扫描
+            for i in range(0, m):  # 对空间进行扫描
+                H_ALL[k, i] = H[k * m + i]
         return H_ALL
 
     def solve_square_method_multi(self, cpu_cores=2, fourier_series=20):  # 默认取傅里叶级数前20项，CPU运算核心为两个，多核运行选择
         # 如果未设定压力扩散系数
-        if self.a is None or self.a == '':
-            self.a = self.K / self.Sy
+        if self.a_as is None or self.a_as == '':
+            self.a_as = self.K * self.ha / self.Sy
         # X轴差分点的数目
         m = int(self.xl / self.sl) + 1
         # 时间轴差分点的数目
@@ -855,7 +912,7 @@ class Unconfined_aquifer_USF(Unstableflow):
                 t_ = np.linspace((c * n_) * self.st, self.tl, n - c * n_)
                 n_ = n - c * n_
             p = Process(target=solve_as_square_uausf, args=(
-                self.a, self.xl, self.sl, n_, t_, self.h_l, self.h_r, self.ha, c, fourier_series, return_dict1))
+                self.a_as, self.xl, self.sl, n_, t_, self.h_l, self.h_r, self.ha, c, fourier_series, return_dict1))
             p.start()
             plist.append(p)
         # 多进程运算开始
@@ -874,31 +931,80 @@ class Unconfined_aquifer_USF(Unstableflow):
 
     def solve_square_method(self, fourier_series=20):
         # 如果未设定压力扩散系数
-        if self.a is None or self.a == '':
-            self.a = self.K / self.Sy
+        if self.a_as is None or self.a_as == '':
+            self.a_as = (self.K * self.ha) / self.Sy
         # X轴差分点的数目
         m = int(self.xl / self.sl) + 1
         # 时间轴差分点的数目
         n = int(self.tl / self.st) + 1
+        # X轴差分点的数目
+        m = int(self.xl / self.sl) + 1
+        # 时间轴差分点的数目
+        n = int(self.tl / self.st) + 1
+        # X轴
+        X = np.linspace(0, self.xl, m)
+        # 时间轴
+        T = np.linspace(0, self.tl, n)
+        # 所有解值矩阵
+        H = np.zeros((m * n, 1))
         # 创建一个全部值为0的矩阵，用于存放各个与差分位置对等的解析解的水头值
         H_ALL = np.zeros((n, m))
-        for k in range(0, n):
-            for i in range(0, m):
-                if i == 0:
-                    ll = self.h_l
-                else:
-                    ll = H_ALL[k-1, i-1]
-                if i == m-1:
-                    rr = self.h_r
-                else:
-                    rr = H_ALL[k-1, i+1]
-                if k != 0:
-                    reference_thickness = 0.5 * self.sl * (rr-ll)/self.sl + ll
-                else:
-                    reference_thickness = self.ha
-                h = lib.Boussinesq_one_dimension_unstable_flow_square_method(self.a, i, k, self.xl,
+        # 所有解值矩阵的行数
+        l = 0
+        for k in T:
+            for i in X:
+                h = lib.Boussinesq_one_dimension_unstable_flow_square_method(self.a_as, i, k, self.xl,
                                                                              self.h_l, self.h_r,
-                                                                             reference_thickness,
+                                                                             self.ha,
                                                                              fourier_series)
-                H_ALL[k, i] = h
+                H[l] = h
+                l += 1
+
+        for k in range(0, n):  # 对时间进行扫描
+            for i in range(0, m):  # 对空间进行扫描
+                H_ALL[k, i] = H[k * m + i]
         return H_ALL
+
+    def hydrological_budget(self, H_ALL: np.ndarray, time_start: int, time_end: int):  # 水均衡计算代码
+        # X轴差分点的数目
+        m = int(self.xl / self.sl) + 1
+        left_boundary_quality = 0  # 左边界流量（单宽流量）
+        for i in range(time_start, time_end + 1):
+            if i == time_start:
+                left_boundary_quality += (H_ALL[i, 1] - H_ALL[i, 0]) * self.K * self.st * 0.5 * H_ALL[i, 0]
+            elif i == time_end:
+                left_boundary_quality += (H_ALL[i, 1] - H_ALL[i, 0]) * self.K * self.st * 0.5 * H_ALL[i, 0]
+            else:
+                left_boundary_quality += (H_ALL[i, 1] - H_ALL[i, 0]) * self.K * self.st * H_ALL[i, 0]
+        right_boundary_quality = 0  # 右边界流量（单宽流量）
+        for i in range(time_start, time_end + 1):
+            if i == time_start:
+                right_boundary_quality += (H_ALL[i, m - 2] - H_ALL[i, m - 1]) * self.K * self.st * 0.5 * H_ALL[i, m - 1]
+            elif i == time_end:
+                right_boundary_quality += (H_ALL[i, m - 2] - H_ALL[i, m - 1]) * self.K * self.st * 0.5 * H_ALL[i, m - 1]
+            else:
+                right_boundary_quality += (H_ALL[i, m - 2] - H_ALL[i, m - 1]) * self.K * self.st * H_ALL[i, m - 1]
+        return [left_boundary_quality * self.B, right_boundary_quality * self.B]
+
+    def hydrological_budget_analytic_solution(self, H_ALL: np.ndarray, time_start: int, time_end: int):  # 水均衡计算代码
+        # X轴差分点的数目
+        m = int(self.xl / self.sl) + 1
+        H_ALL[0, 0] = self.ic  # 解析解边值点矫正，这两个点的位置不影响水头计算，但是影响水均衡计算
+        H_ALL[0, m - 1] = self.ic
+        left_boundary_quality = 0  # 左边界流量（单宽流量）
+        for i in range(time_start, time_end + 1):
+            if i == time_start:
+                left_boundary_quality += (H_ALL[i, 1] - H_ALL[i, 0]) * self.K * self.st * 0.5 * H_ALL[i, 0]
+            elif i == time_end:
+                left_boundary_quality += (H_ALL[i, 1] - H_ALL[i, 0]) * self.K * self.st * 0.5 * H_ALL[i, 0]
+            else:
+                left_boundary_quality += (H_ALL[i, 1] - H_ALL[i, 0]) * self.K * self.st * H_ALL[i, 0]
+        right_boundary_quality = 0  # 右边界流量（单宽流量）
+        for i in range(time_start, time_end + 1):
+            if i == time_start:
+                right_boundary_quality += (H_ALL[i, m - 2] - H_ALL[i, m - 1]) * self.K * self.st * 0.5 * H_ALL[i, m - 1]
+            elif i == time_end:
+                right_boundary_quality += (H_ALL[i, m - 2] - H_ALL[i, m - 1]) * self.K * self.st * 0.5 * H_ALL[i, m - 1]
+            else:
+                right_boundary_quality += (H_ALL[i, m - 2] - H_ALL[i, m - 1]) * self.K * self.st * H_ALL[i, m - 1]
+        return [left_boundary_quality * self.B, right_boundary_quality * self.B]

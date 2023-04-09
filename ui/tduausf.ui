@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>1180</width>
-    <height>822</height>
+    <height>820</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -305,7 +305,7 @@ p, li { white-space: pre-wrap; }
      <x>20</x>
      <y>560</y>
      <width>491</width>
-     <height>51</height>
+     <height>61</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_11">
@@ -440,7 +440,7 @@ p, li { white-space: pre-wrap; }
     <item row="0" column="0">
      <widget class="QPushButton" name="solve">
       <property name="text">
-       <string>计算并绘图（初始时刻）</string>
+       <string>进行数值解计算</string>
       </property>
      </widget>
     </item>
