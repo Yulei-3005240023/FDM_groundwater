@@ -31,6 +31,8 @@ class MainWindow(QMainWindow):
         self.ui.save_project.triggered.connect(self.save_project)
         # 打开工程文件
         self.ui.open_project.triggered.connect(self.open_project)
+        # 关于本程序
+        self.ui.action_about.triggered.connect(self.about)
         # 树状水流模式选择
         self.ui.treeWidget.clicked.connect(self.next)
         # 关于程序与算法的列表选择
@@ -41,6 +43,8 @@ class MainWindow(QMainWindow):
         self.Set_fourier_series_window = cw.Set_fourier_series()
         # 实例化具象：设置解析解运行的cpu核心数
         self.Set_cpu_cores = cw.Set_cpu_cores()
+        # 实例化具象：对于本程序
+        self.About_this_program_window = cw.About_this_program()
         # 实例化具象：承压含水层一维稳定流
         self.one_dimension_confined_aquifer_stable_flow_window = cw.One_dimension_confined_aquifer_stable_flow()
         # 实例化具象：承压含水层一维非稳定流
@@ -110,6 +114,9 @@ class MainWindow(QMainWindow):
         self.one_dimension_confined_aquifer_unstable_flow_window.cpu_cores = self.cpu_cores
         self.one_dimension_unconfined_aquifer_unstable_flow_window.cpu_cores = self.cpu_cores
 
+    def about(self):  # 打开关于本程序窗口
+        self.About_this_program_window.ui.show()
+
     def algorithm_information(self):
         item = self.ui.listWidget_0.currentItem()
         # 清空文本框
@@ -165,6 +172,23 @@ class MainWindow(QMainWindow):
             self.ui.textBrowser_1.setText('导水系数(transmissivity)')
             self.ui.textBrowser_1.append(
                 '  虽然渗透系数(K)可以说明岩层的透水能力，但不能单独说明含水层的出水能力。对于承压含水层，由于其厚度(M)是定值，则T=KM也是定值。T称为导水系数，它指的是在水力梯度等于1水流经整个含水层厚度上的单宽流量，常用单位是m2/d。导水系数是表征承压含水层导水能力的参数，只使用于二维流，对于三维流则没有意义。')
+        if item.whatsThis() == '源汇项函数':
+            self.ui.textBrowser_1.setText('源汇项函数')
+            self.ui.textBrowser_1.append(
+                '  表明含水层由于外界大气降水，或者相邻含水层的越流等作用对含水层水量的补给。表示在单位时间内，单位含水层柱体所增加或减少的水头，单位为m。')
+        if item.whatsThis() == '给水度':
+            self.ui.textBrowser_1.setText('给水度(specific_yield)')
+            self.ui.textBrowser_1.append('  一定体积的饱水多孔介质在重力作用下释放出的水的体积与多孔介质体积之比。')
+        if item.whatsThis() == '贮水系数':
+            self.ui.textBrowser_1.setText('贮水系数(storativity)')
+            self.ui.textBrowser_1.append('  测压水头下降（或升高）一个单位，从单位水平面积承压含水层柱体中释放（或释水）能力的参数。《地下水科学概论》p32')
+        if item.whatsThis() == '参考厚度':
+            self.ui.textBrowser_1.setText('参考厚度')
+            self.ui.textBrowser_1.append(
+                '  潜水含水层的参考厚度，在计算解析解中，默认潜水面的参考厚度等于初始条件，使用参考厚度法或者平方法来线性化Boussinesq方程，若计算解析解必须填入此项，输入整数或者浮点数.')
+        if item.whatsThis() == '初始条件':
+            self.ui.textBrowser_1.setText('初始条件')
+            self.ui.textBrowser_1.append('  非稳定流的初始水头条件，表明在水位开始波动前的含水层水头。')
 
     def toth(self):  # 进入Tóth复杂盆地的部分
         task10 = gevent.spawn(self.toth_difficult_basin_window.ui.show())
@@ -435,17 +459,24 @@ class MainWindow(QMainWindow):
     def read_two_dimension_unconfined_aquifer_unstable_flow(self, filepath, line_number):
         file = open(filepath, mode='r', encoding='utf8')  # 打开文件
         linelist = file.readlines()  # 读取每一行的数据
-        self.two_dimension_unconfined_aquifer_stable_flow_window.ui.hydraulic_conductivity.setText(
+        self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.hydraulic_conductivity.setText(
             linelist[line_number + 1][:-1])
-        self.two_dimension_unconfined_aquifer_stable_flow_window.ui.leakage_recharge.setText(
+        self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.leakage_recharge.setText(
             linelist[line_number + 2][:-1])
-        self.two_dimension_unconfined_aquifer_stable_flow_window.ui.t_boundary.setText(linelist[line_number + 3][:-1])
-        self.two_dimension_unconfined_aquifer_stable_flow_window.ui.b_boundary.setText(linelist[line_number + 4][:-1])
-        self.two_dimension_unconfined_aquifer_stable_flow_window.ui.l_boundary.setText(linelist[line_number + 5][:-1])
-        self.two_dimension_unconfined_aquifer_stable_flow_window.ui.r_boundary.setText(linelist[line_number + 6][:-1])
-        self.two_dimension_unconfined_aquifer_stable_flow_window.ui.x_length.setText(linelist[line_number + 7][:-1])
-        self.two_dimension_unconfined_aquifer_stable_flow_window.ui.y_length.setText(linelist[line_number + 8][:-1])
-        self.two_dimension_unconfined_aquifer_stable_flow_window.ui.step_length.setText(linelist[line_number + 9][:-1])
+        self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.t_boundary.setText(linelist[line_number + 3][:-1])
+        self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.b_boundary.setText(linelist[line_number + 4][:-1])
+        self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.l_boundary.setText(linelist[line_number + 5][:-1])
+        self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.r_boundary.setText(linelist[line_number + 6][:-1])
+        self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.x_length.setText(linelist[line_number + 7][:-1])
+        self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.y_length.setText(linelist[line_number + 8][:-1])
+        self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.step_length.setText(
+            linelist[line_number + 9][:-1])
+        self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.initial_condition.setText(
+            linelist[line_number + 10][:-1])
+        self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.t_length.setText(linelist[line_number + 11][:-1])
+        self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.step_time.setText(linelist[line_number + 12][:-1])
+        self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.specific_yield.setText(
+            linelist[line_number + 13][:-1])
 
         file.close()
 
@@ -477,7 +508,7 @@ class MainWindow(QMainWindow):
         self.write_two_dimension_confined_aquifer_stable_flow(filepath)
         self.write_two_dimension_confined_aquifer_unstable_flow(filepath)
         self.write_two_dimension_unconfined_aquifer_stable_flow(filepath)
-        self.write_two_dimension_unconfined_aquifer_unstable_flow()
+        self.write_two_dimension_unconfined_aquifer_unstable_flow(filepath)
 
     def open_project(self):  # 打开工程文件
         path_exe = getcwd()
@@ -517,7 +548,6 @@ class MainWindow(QMainWindow):
                 self.read_two_dimension_unconfined_aquifer_unstable_flow(filepath, line_number)
 
             line_number += 1
-            # print(line)
 
 
 # 按间距中的绿色按钮以运行脚本。

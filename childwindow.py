@@ -18,9 +18,10 @@ class Set_fourier_series(QDialog):
     def __init__(self):
         super().__init__()
         # 从文件中加载ui格式
-        self.fourier_series = None
         self.ui = QUiLoader().load("ui/Set_fourier_series.ui")
         self.ui.setWindowIcon(QIcon("water.ico"))
+        # 设置傅里叶级数
+        self.fourier_series = 1000  # 默认为1000
         # 监测按钮《确认》
         self.ui.sure.clicked.connect(self.sure)
         # 监测按钮《返回》
@@ -42,7 +43,6 @@ class Set_cpu_cores(QDialog):
     def __init__(self):
         super().__init__()
         # 从文件中加载ui格式
-        self.fourier_series = None
         self.ui = QUiLoader().load("ui/Set_cpu_cores.ui")
         self.ui.setWindowIcon(QIcon("water.ico"))
         # 读取当前设备的CPU物理核心数目
@@ -57,6 +57,44 @@ class Set_cpu_cores(QDialog):
         cpu_cores = self.ui.verticalSlider.value()
         self.signal_cpu_cores.emit(cpu_cores)
         self.ui.close()
+
+    def back(self):
+        self.ui.close()
+
+
+class Set_width(QDialog):
+    # 定义信号
+    signal_width = Signal(int)
+
+    def __init__(self):
+        super().__init__()
+        # 从文件中加载ui格式
+        self.ui = QUiLoader().load("ui/Set_width.ui")
+        self.ui.setWindowIcon(QIcon("water.ico"))
+        # 设置含水层宽度
+        self.B = 1  # 默认为1
+        # 监测按钮《确认》
+        self.ui.sure.clicked.connect(self.sure)
+        # 监测按钮《返回》
+        self.ui.back.clicked.connect(self.back)
+
+    def sure(self):
+        width = self.ui.verticalSlider.value()
+        self.signal_width.emit(width)
+        self.ui.close()
+
+    def back(self):
+        self.ui.close()
+
+
+class About_this_program(QDialog):
+    def __init__(self):
+        super().__init__()
+        # 从文件中加载ui格式
+        self.ui = QUiLoader().load("ui/About_this_program.ui")
+        self.ui.setWindowIcon(QIcon("water.ico"))
+        # 监测按钮《返回》
+        self.ui.back.clicked.connect(self.back)
 
     def back(self):
         self.ui.close()
@@ -388,6 +426,9 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
             hb_list_fdm = self.flow.hydrological_budget(self.solve_fdm, t0, t1)
             self.ui.textBrowser.append(
                 '数值解水均衡结果：左边界流量：' + str(hb_list_fdm[0]) + ' 右边界流量：' + str(hb_list_fdm[1]))
+            self.ui.textBrowser.append('通过边界流量计算的含水层水量变化：' + str(hb_list_fdm[2]))
+            self.ui.textBrowser.append('通过储水系数计算的含水层水量的变化：' + str(hb_list_fdm[3]))
+            self.ui.textBrowser.append('二者比值为：' + str(hb_list_fdm[4]))
         if self.solve_as is not None:
             hb_list_as = self.flow.hydrological_budget_analytic_solution(self.solve_as, t0, t1)
             self.ui.textBrowser.append(
@@ -711,14 +752,23 @@ class Two_dimension_confined_aquifer_stable_flow(QMainWindow):
         # 从文件中加载ui格式
         self.ui = QUiLoader().load("ui/ttdcasf.ui")
         self.ui.setWindowIcon(QIcon("water.ico"))
-        # 监测按钮《计算并绘图》
+        # 预设差分结果矩阵
+        self.solve_fdm = None
+        # 监测按钮《数值解计算》
+        self.ui.solve.clicked.connect(self.solve)
+        # 监测按钮《绘图》
         self.ui.draw.clicked.connect(self.flow_draw)
         # 监测按钮《返回上一级》
         self.ui.back.clicked.connect(self.return_main)
         # 获取自编库中的类的用法
         self.flow = ft.Confined_aquifer_SF()
+        # 获取当前系统时间戳
+        t = time.localtime()
+        # 日志时间
+        self.time = str(time.strftime("%Y-%m-%d_%H时%M分%S秒", t))
+        self.ui.textBrowser.append('程序运行时间（北京时间）：' + str(time.strftime("%Y-%m-%d %H:%M:%S", t)))
 
-    def flow_draw(self):
+    def solve(self):
         self.flow.transmissivity(self.ui.transmissivity.toPlainText())
         self.flow.leakage_recharge(self.ui.leakage_recharge.toPlainText())
         self.flow.t_boundary(self.ui.t_boundary.toPlainText())
@@ -728,7 +778,18 @@ class Two_dimension_confined_aquifer_stable_flow(QMainWindow):
         self.flow.step_length(self.ui.step_length.toPlainText())
         self.flow.x_length(self.ui.x_length.toPlainText())
         self.flow.y_length(self.ui.y_length.toPlainText())
-        self.flow.draw(self.flow.solve())
+        # 获取当前系统时间戳
+        t = time.localtime()
+        self.ui.textBrowser.append(str(time.strftime("%H:%M:%S", t)))
+        self.ui.textBrowser.append('正在进行数值解求解')
+        self.ui.textBrowser.append('空间差分步长：' + str(self.flow.sl))
+        start_time = time.perf_counter()
+        self.solve_fdm = self.flow.solve()
+        end_time = time.perf_counter()
+        self.ui.textBrowser.append('计算完毕，用时' + str(end_time - start_time) + '秒')
+
+    def flow_draw(self):
+        self.flow.draw(self.solve_fdm)
 
     def return_main(self):
         self.ui.close()
@@ -740,14 +801,23 @@ class Two_dimension_unconfined_aquifer_stable_flow(QMainWindow):
         # 从文件中加载ui格式
         self.ui = QUiLoader().load("ui/ttduasf.ui")
         self.ui.setWindowIcon(QIcon("water.ico"))
-        # 监测按钮《计算并绘图》
+        # 预设差分结果矩阵
+        self.solve_fdm = None
+        # 监测按钮《数值解计算》
+        self.ui.solve.clicked.connect(self.solve)
+        # 监测按钮《绘图》
         self.ui.draw.clicked.connect(self.flow_draw)
         # 监测按钮《返回上一级》
         self.ui.back.clicked.connect(self.return_main)
         # 获取自编库中的类的用法
         self.flow = ft.Unconfined_aquifer_SF()
+        # 获取当前系统时间戳
+        t = time.localtime()
+        # 日志时间
+        self.time = str(time.strftime("%Y-%m-%d_%H时%M分%S秒", t))
+        self.ui.textBrowser.append('程序运行时间（北京时间）：' + str(time.strftime("%Y-%m-%d %H:%M:%S", t)))
 
-    def flow_draw(self):
+    def solve(self):
         self.flow.hydraulic_conductivity(self.ui.hydraulic_conductivity.toPlainText())
         self.flow.leakage_recharge(self.ui.leakage_recharge.toPlainText())
         self.flow.t_boundary(self.ui.t_boundary.toPlainText())
@@ -757,7 +827,18 @@ class Two_dimension_unconfined_aquifer_stable_flow(QMainWindow):
         self.flow.step_length(self.ui.step_length.toPlainText())
         self.flow.x_length(self.ui.x_length.toPlainText())
         self.flow.y_length(self.ui.y_length.toPlainText())
-        self.flow.draw(self.flow.solve())
+        # 获取当前系统时间戳
+        t = time.localtime()
+        self.ui.textBrowser.append(str(time.strftime("%H:%M:%S", t)))
+        self.ui.textBrowser.append('正在进行数值解求解')
+        self.ui.textBrowser.append('空间差分步长：' + str(self.flow.sl))
+        start_time = time.perf_counter()
+        self.solve_fdm = self.flow.solve()
+        end_time = time.perf_counter()
+        self.ui.textBrowser.append('计算完毕，用时' + str(end_time - start_time) + '秒')
+
+    def flow_draw(self):
+        self.flow.draw(self.solve_fdm)
 
     def return_main(self):
         self.ui.close()
@@ -769,7 +850,11 @@ class Two_dimension_confined_aquifer_unstable_flow(QMainWindow):
         # 从文件中加载ui格式
         self.ui = QUiLoader().load("ui/ttdcausf.ui")
         self.ui.setWindowIcon(QIcon("water.ico"))
-        # 监测按钮《计算并绘图》
+        # 预设差分结果矩阵
+        self.solve_fdm = None
+        # 监测按钮《数值解计算》
+        self.ui.solve.clicked.connect(self.solve)
+        # 监测按钮《绘图》
         self.ui.draw.clicked.connect(self.flow_draw)
         # 监测按钮《返回上一级》
         self.ui.back.clicked.connect(self.return_main)
@@ -783,8 +868,13 @@ class Two_dimension_confined_aquifer_unstable_flow(QMainWindow):
         self.h_all_time = []
         self.time_location = 0  # 时刻位置
         self.time_all = 0  # 抛开初始时刻的所有时刻个数
+        # 获取当前系统时间戳
+        t = time.localtime()
+        # 日志时间
+        self.time = str(time.strftime("%Y-%m-%d_%H时%M分%S秒", t))
+        self.ui.textBrowser.append('程序运行时间（北京时间）：' + str(time.strftime("%Y-%m-%d %H:%M:%S", t)))
 
-    def flow_draw(self):
+    def solve(self):
         self.flow.l_boundary(self.ui.l_boundary.toPlainText())
         self.flow.r_boundary(self.ui.r_boundary.toPlainText())
         self.flow.t_boundary(self.ui.t_boundary.toPlainText())
@@ -798,7 +888,17 @@ class Two_dimension_confined_aquifer_unstable_flow(QMainWindow):
         self.flow.storativity(self.ui.storativity.toPlainText())
         self.flow.transmissivity(self.ui.transmissivity.toPlainText())
         self.flow.leakage_recharge(self.ui.leakage_recharge.toPlainText())
+        # 获取当前系统时间戳
+        t = time.localtime()
+        self.ui.textBrowser.append(str(time.strftime("%H:%M:%S", t)))
+        self.ui.textBrowser.append('正在进行数值解求解')
+        self.ui.textBrowser.append('空间差分步长：' + str(self.flow.sl))
+        start_time = time.perf_counter()
         self.h_all_time = self.flow.solve()
+        end_time = time.perf_counter()
+        self.ui.textBrowser.append('计算完毕，用时' + str(end_time - start_time) + '秒')
+
+    def flow_draw(self):
         self.flow.draw(self.h_all_time[0])  # 绘制初始时刻的水头值
         self.time_all = len(self.h_all_time) - 1
         self.time_location = 0
@@ -841,6 +941,11 @@ class Two_dimension_unconfined_aquifer_unstable_flow(QMainWindow):
         self.h_all_time = []
         self.time_location = 0  # 时刻位置
         self.time_all = 0  # 抛开初始时刻的所有时刻个数
+        # 获取当前系统时间戳
+        t = time.localtime()
+        # 日志时间
+        self.time = str(time.strftime("%Y-%m-%d_%H时%M分%S秒", t))
+        self.ui.textBrowser.append('程序运行时间（北京时间）：' + str(time.strftime("%Y-%m-%d %H:%M:%S", t)))
 
     def set_time_choose_box(self):  # 设置时刻选择条
         time_all = int(self.flow.tl / self.flow.st) + 1

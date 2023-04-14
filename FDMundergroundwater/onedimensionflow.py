@@ -678,21 +678,25 @@ class Confined_aquifer_USF(Unstableflow):
         m = int(self.xl / self.sl) + 1
         left_boundary_quality = 0  # 左边界流量（单宽流量）
         for i in range(time_start, time_end + 1):
-            if i == time_start:
-                left_boundary_quality += (H_ALL[i, 1] - H_ALL[i, 0]) * self.T * self.st * 0.5
-            elif i == time_end:
-                left_boundary_quality += (H_ALL[i, 1] - H_ALL[i, 0]) * self.T * self.st * 0.5
+            if i == time_start or i == time_end:
+                left_boundary_quality += (H_ALL[i, 1] - H_ALL[i, 0]) / self.sl * self.T * self.st * 0.5
             else:
-                left_boundary_quality += (H_ALL[i, 1] - H_ALL[i, 0]) * self.T * self.st
+                left_boundary_quality += (H_ALL[i, 1] - H_ALL[i, 0]) / self.sl * self.T * self.st
         right_boundary_quality = 0  # 右边界流量（单宽流量）
         for i in range(time_start, time_end + 1):
-            if i == time_start:
-                right_boundary_quality += (H_ALL[i, m - 2] - H_ALL[i, m - 1]) * self.T * self.st * 0.5
-            elif i == time_end:
-                right_boundary_quality += (H_ALL[i, m - 2] - H_ALL[i, m - 1]) * self.T * self.st * 0.5
+            if i == time_start or i == time_end:
+                right_boundary_quality += (H_ALL[i, m - 2] - H_ALL[i, m - 1]) / self.sl * self.T * self.st * 0.5
             else:
-                right_boundary_quality += (H_ALL[i, m - 2] - H_ALL[i, m - 1]) * self.T * self.st
-        return [left_boundary_quality * self.B, right_boundary_quality * self.B]
+                right_boundary_quality += (H_ALL[i, m - 2] - H_ALL[i, m - 1]) / self.sl * self.T * self.st
+        aquifer_quality = 0  # 含水层水量变化
+        for k in range(0, m):
+            if k == 0 or k == m:
+                aquifer_quality += -(H_ALL[time_end, k] - H_ALL[time_start, k]) * self.S * self.sl * 0.5
+            else:
+                aquifer_quality += -(H_ALL[time_end, k] - H_ALL[time_start, k]) * self.S * self.sl
+        boundary_quality = left_boundary_quality + right_boundary_quality
+        water_balance = abs(boundary_quality) / abs(aquifer_quality)
+        return [left_boundary_quality * self.B, right_boundary_quality * self.B, boundary_quality * self.B, aquifer_quality * self.B, water_balance]
 
     def hydrological_budget_analytic_solution(self, H_ALL: np.ndarray, time_start: int, time_end: int):  # 水均衡计算代码
         # X轴差分点的数目
@@ -701,21 +705,26 @@ class Confined_aquifer_USF(Unstableflow):
         H_ALL[0, m - 1] = self.ic
         left_boundary_quality = 0  # 左边界流量（单宽流量）
         for i in range(time_start, time_end + 1):
-            if i == time_start:
-                left_boundary_quality += (H_ALL[i, 1] - H_ALL[i, 0]) * self.T * self.st * 0.5
-            elif i == time_end:
+            if i == time_start or i == time_end:
                 left_boundary_quality += (H_ALL[i, 1] - H_ALL[i, 0]) * self.T * self.st * 0.5
             else:
                 left_boundary_quality += (H_ALL[i, 1] - H_ALL[i, 0]) * self.T * self.st
         right_boundary_quality = 0  # 右边界流量（单宽流量）
         for i in range(time_start, time_end + 1):
-            if i == time_start:
-                right_boundary_quality += (H_ALL[i, m - 2] - H_ALL[i, m - 1]) * self.T * self.st * 0.5
-            elif i == time_end:
+            if i == time_start or i == time_end:
                 right_boundary_quality += (H_ALL[i, m - 2] - H_ALL[i, m - 1]) * self.T * self.st * 0.5
             else:
                 right_boundary_quality += (H_ALL[i, m - 2] - H_ALL[i, m - 1]) * self.T * self.st
-        return [left_boundary_quality * self.B, right_boundary_quality * self.B]
+        aquifer_quality = 0  # 含水层水量变化
+        for k in range(0, m):
+            if k == 0 or k == m:
+                aquifer_quality += -(H_ALL[time_end, k] - H_ALL[time_start, k]) * self.S * self.sl * 0.5
+            else:
+                aquifer_quality += -(H_ALL[time_end, k] - H_ALL[time_start, k]) * self.S * self.sl
+        boundary_quality = left_boundary_quality + right_boundary_quality
+        water_balance = abs(boundary_quality) / abs(aquifer_quality)
+        return [left_boundary_quality * self.B, right_boundary_quality * self.B, boundary_quality * self.B,
+                aquifer_quality * self.B, water_balance]
 
 
 class Unconfined_aquifer_USF(Unstableflow):
@@ -984,7 +993,16 @@ class Unconfined_aquifer_USF(Unstableflow):
                 right_boundary_quality += (H_ALL[i, m - 2] - H_ALL[i, m - 1]) * self.K * self.st * 0.5 * H_ALL[i, m - 1]
             else:
                 right_boundary_quality += (H_ALL[i, m - 2] - H_ALL[i, m - 1]) * self.K * self.st * H_ALL[i, m - 1]
-        return [left_boundary_quality * self.B, right_boundary_quality * self.B]
+        aquifer_quality = 0  # 含水层水量变化
+        for k in range(0, m):
+            if k == 0 or k == m:
+                aquifer_quality += -(H_ALL[time_end, k] - H_ALL[time_start, k]) * self.Sy * self.sl * 0.5
+            else:
+                aquifer_quality += -(H_ALL[time_end, k] - H_ALL[time_start, k]) * self.Sy * self.sl
+        boundary_quality = left_boundary_quality + right_boundary_quality
+        water_balance = abs(boundary_quality) / abs(aquifer_quality)
+        return [left_boundary_quality * self.B, right_boundary_quality * self.B, boundary_quality * self.B,
+                aquifer_quality * self.B, water_balance]
 
     def hydrological_budget_analytic_solution(self, H_ALL: np.ndarray, time_start: int, time_end: int):  # 水均衡计算代码
         # X轴差分点的数目
@@ -993,18 +1011,23 @@ class Unconfined_aquifer_USF(Unstableflow):
         H_ALL[0, m - 1] = self.ic
         left_boundary_quality = 0  # 左边界流量（单宽流量）
         for i in range(time_start, time_end + 1):
-            if i == time_start:
-                left_boundary_quality += (H_ALL[i, 1] - H_ALL[i, 0]) * self.K * self.st * 0.5 * H_ALL[i, 0]
-            elif i == time_end:
+            if i == time_start or i == time_end:
                 left_boundary_quality += (H_ALL[i, 1] - H_ALL[i, 0]) * self.K * self.st * 0.5 * H_ALL[i, 0]
             else:
                 left_boundary_quality += (H_ALL[i, 1] - H_ALL[i, 0]) * self.K * self.st * H_ALL[i, 0]
         right_boundary_quality = 0  # 右边界流量（单宽流量）
         for i in range(time_start, time_end + 1):
-            if i == time_start:
-                right_boundary_quality += (H_ALL[i, m - 2] - H_ALL[i, m - 1]) * self.K * self.st * 0.5 * H_ALL[i, m - 1]
-            elif i == time_end:
+            if i == time_start or i == time_end:
                 right_boundary_quality += (H_ALL[i, m - 2] - H_ALL[i, m - 1]) * self.K * self.st * 0.5 * H_ALL[i, m - 1]
             else:
                 right_boundary_quality += (H_ALL[i, m - 2] - H_ALL[i, m - 1]) * self.K * self.st * H_ALL[i, m - 1]
-        return [left_boundary_quality * self.B, right_boundary_quality * self.B]
+        aquifer_quality = 0  # 含水层水量变化
+        for k in range(0, m):
+            if k == 0 or k == m:
+                aquifer_quality += -(H_ALL[time_end, k] - H_ALL[time_start, k]) * self.Sy * self.sl * 0.5
+            else:
+                aquifer_quality += -(H_ALL[time_end, k] - H_ALL[time_start, k]) * self.Sy * self.sl
+        boundary_quality = left_boundary_quality + right_boundary_quality
+        water_balance = abs(boundary_quality) / abs(aquifer_quality)
+        return [left_boundary_quality * self.B, right_boundary_quality * self.B, boundary_quality * self.B,
+                aquifer_quality * self.B, water_balance]

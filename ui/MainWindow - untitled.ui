@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>FDM_undergroundwater</class>
- <widget class="QMainWindow" name="FDM_undergroundwater">
+ <class>Learning_undergroundwater</class>
+ <widget class="QMainWindow" name="Learning_undergroundwater">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>940</width>
-    <height>560</height>
+    <height>573</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>FDM_undergroundwater</string>
+   <string>认知地下水水流模型</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="cursor">
@@ -282,6 +282,22 @@
       </item>
       <item>
        <property name="text">
+        <string>给水度</string>
+       </property>
+       <property name="whatsThis">
+        <string>给水度</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>贮水系数</string>
+       </property>
+       <property name="whatsThis">
+        <string>贮水系数</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
         <string>参考厚度</string>
        </property>
        <property name="whatsThis">
@@ -426,11 +442,13 @@
     </property>
     <addaction name="actionSet_fourier_series"/>
     <addaction name="actionSet_cpu_cores"/>
+    <addaction name="actionSet_width"/>
    </widget>
    <widget class="QMenu" name="menu_3">
     <property name="title">
      <string>   帮助   </string>
     </property>
+    <addaction name="action_about"/>
    </widget>
    <addaction name="menu"/>
    <addaction name="menu_2"/>
@@ -455,6 +473,16 @@
   <action name="actionSet_cpu_cores">
    <property name="text">
     <string>分配解析解计算核心</string>
+   </property>
+  </action>
+  <action name="action_about">
+   <property name="text">
+    <string>关于本程序</string>
+   </property>
+  </action>
+  <action name="actionSet_width">
+   <property name="text">
+    <string>一维流含水层宽度</string>
    </property>
   </action>
  </widget>
