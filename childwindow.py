@@ -79,7 +79,7 @@ class Set_width(QDialog):
         self.ui.back.clicked.connect(self.back)
 
     def sure(self):
-        width = self.ui.verticalSlider.value()
+        width = self.ui.spinBox_width.value()
         self.signal_width.emit(width)
         self.ui.close()
 
@@ -433,6 +433,9 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
             hb_list_as = self.flow.hydrological_budget_analytic_solution(self.solve_as, t0, t1)
             self.ui.textBrowser.append(
                 '解析解水均衡结果：左边界流量：' + str(hb_list_as[0]) + ' 右边界流量：' + str(hb_list_as[1]))
+            self.ui.textBrowser.append('通过边界流量计算的含水层水量变化：' + str(hb_list_as[2]))
+            self.ui.textBrowser.append('通过储水系数计算的含水层水量的变化：' + str(hb_list_as[3]))
+            self.ui.textBrowser.append('二者比值为：' + str(hb_list_as[4]))
 
 
 class One_dimension_unconfined_aquifer_stable_flow(QMainWindow):
@@ -733,14 +736,23 @@ class One_dimension_unconfined_aquifer_unstable_flow(QMainWindow):
             hb_list_fdm = self.flow.hydrological_budget(self.solve_fdm, t0, t1)
             self.ui.textBrowser.append(
                 '数值解水均衡结果：左边界流量：' + str(hb_list_fdm[0]) + ' 右边界流量：' + str(hb_list_fdm[1]))
+            self.ui.textBrowser.append('通过边界流量计算的含水层水量变化：' + str(hb_list_fdm[2]))
+            self.ui.textBrowser.append('通过储水系数计算的含水层水量的变化：' + str(hb_list_fdm[3]))
+            self.ui.textBrowser.append('二者比值为：' + str(hb_list_fdm[4]))
         if self.solve_as0 is not None:
             hb_list_as = self.flow.hydrological_budget_analytic_solution(self.solve_as0, t0, t1)
             self.ui.textBrowser.append(
                 '参考厚度法解析解水均衡结果：左边界流量：' + str(hb_list_as[0]) + ' 右边界流量：' + str(hb_list_as[1]))
+            self.ui.textBrowser.append('通过边界流量计算的含水层水量变化：' + str(hb_list_as[2]))
+            self.ui.textBrowser.append('通过储水系数计算的含水层水量的变化：' + str(hb_list_as[3]))
+            self.ui.textBrowser.append('二者比值为：' + str(hb_list_as[4]))
         if self.solve_as1 is not None:
             hb_list_as = self.flow.hydrological_budget_analytic_solution(self.solve_as1, t0, t1)
             self.ui.textBrowser.append(
                 '平方法解析解水均衡结果：左边界流量：' + str(hb_list_as[0]) + ' 右边界流量：' + str(hb_list_as[1]))
+            self.ui.textBrowser.append('通过边界流量计算的含水层水量变化：' + str(hb_list_as[2]))
+            self.ui.textBrowser.append('通过储水系数计算的含水层水量的变化：' + str(hb_list_as[3]))
+            self.ui.textBrowser.append('二者比值为：' + str(hb_list_as[4]))
 
     def return_main(self):
         self.ui.close()

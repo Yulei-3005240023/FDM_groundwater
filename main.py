@@ -27,6 +27,9 @@ class MainWindow(QMainWindow):
         # 设置解析解运行的CPU核心数
         self.cpu_cores = 1
         self.ui.actionSet_cpu_cores.triggered.connect(self.actionSet_cpu_cores)
+        # 设置一维非稳定流的含水层宽度
+        self.width = 1
+        self.ui.actionSet_width.triggered.connect(self.actionSet_width)
         # 保存为工程文件
         self.ui.save_project.triggered.connect(self.save_project)
         # 打开工程文件
@@ -43,6 +46,8 @@ class MainWindow(QMainWindow):
         self.Set_fourier_series_window = cw.Set_fourier_series()
         # 实例化具象：设置解析解运行的cpu核心数
         self.Set_cpu_cores = cw.Set_cpu_cores()
+        # 实例化具象：设置含水层宽度
+        self.Set_width = cw.Set_width()
         # 实例化具象：对于本程序
         self.About_this_program_window = cw.About_this_program()
         # 实例化具象：承压含水层一维稳定流
@@ -114,6 +119,15 @@ class MainWindow(QMainWindow):
         self.one_dimension_confined_aquifer_unstable_flow_window.cpu_cores = self.cpu_cores
         self.one_dimension_unconfined_aquifer_unstable_flow_window.cpu_cores = self.cpu_cores
 
+    def actionSet_width(self):
+        self.Set_width.ui.show()
+        self.Set_width.signal_width.connect(self.get_width)
+
+    def get_width(self, width):  # 主窗口获得含水层宽度的槽函数
+        self.width = width
+        self.one_dimension_confined_aquifer_unstable_flow_window.flow.B = self.width
+        self.one_dimension_unconfined_aquifer_unstable_flow_window.flow.B = self.width
+
     def about(self):  # 打开关于本程序窗口
         self.About_this_program_window.ui.show()
 
@@ -181,7 +195,8 @@ class MainWindow(QMainWindow):
             self.ui.textBrowser_1.append('  一定体积的饱水多孔介质在重力作用下释放出的水的体积与多孔介质体积之比。')
         if item.whatsThis() == '贮水系数':
             self.ui.textBrowser_1.setText('贮水系数(storativity)')
-            self.ui.textBrowser_1.append('  测压水头下降（或升高）一个单位，从单位水平面积承压含水层柱体中释放（或释水）能力的参数。《地下水科学概论》p32')
+            self.ui.textBrowser_1.append(
+                '  测压水头下降（或升高）一个单位，从单位水平面积承压含水层柱体中释放（或释水）能力的参数。《地下水科学概论》p32')
         if item.whatsThis() == '参考厚度':
             self.ui.textBrowser_1.setText('参考厚度')
             self.ui.textBrowser_1.append(
