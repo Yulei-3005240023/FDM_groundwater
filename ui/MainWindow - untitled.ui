@@ -136,7 +136,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>3</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -220,14 +220,23 @@
        <property name="text">
         <string>一维非稳定流承压含水层</string>
        </property>
+       <property name="whatsThis">
+        <string>一维非稳定流承压含水层</string>
+       </property>
       </item>
       <item>
        <property name="text">
         <string>一维非稳定流潜水含水层的参考厚度法</string>
        </property>
+       <property name="whatsThis">
+        <string>一维非稳定流潜水含水层的参考厚度法</string>
+       </property>
       </item>
       <item>
        <property name="text">
+        <string>一维非稳定流潜水含水层的平方法</string>
+       </property>
+       <property name="whatsThis">
         <string>一维非稳定流潜水含水层的平方法</string>
        </property>
       </item>
@@ -324,6 +333,9 @@
        <property name="text">
         <string>Dupuit假设</string>
        </property>
+       <property name="whatsThis">
+        <string>Dupuit假设</string>
+       </property>
       </item>
      </widget>
      <widget class="QTextBrowser" name="textBrowser_1">
@@ -354,14 +366,23 @@
        <property name="text">
         <string>承压含水层一维稳定流抛物线型解</string>
        </property>
+       <property name="whatsThis">
+        <string>承压含水层一维稳定流抛物线型解</string>
+       </property>
       </item>
       <item>
        <property name="text">
         <string>承压含水层一维稳定流对数线性解</string>
        </property>
+       <property name="whatsThis">
+        <string>承压含水层一维稳定流对数线性解</string>
+       </property>
       </item>
       <item>
        <property name="text">
+        <string>潜水含水层一维稳定流分水岭</string>
+       </property>
+       <property name="whatsThis">
         <string>潜水含水层一维稳定流分水岭</string>
        </property>
       </item>
@@ -377,9 +398,15 @@
        <property name="text">
         <string>对比潜水含水层一维非稳定流的解析解和数值解</string>
        </property>
+       <property name="whatsThis">
+        <string>对比潜水含水层一维非稳定流的解析解和数值解</string>
+       </property>
       </item>
       <item>
        <property name="text">
+        <string>使用水均衡功能计算和分析边界的流量</string>
+       </property>
+       <property name="whatsThis">
         <string>使用水均衡功能计算和分析边界的流量</string>
        </property>
       </item>

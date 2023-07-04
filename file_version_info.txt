@@ -29,13 +29,13 @@ VSVersionInfo(
       [
       StringTable(
         u'040904B0',
-        [StringStruct(u'FileDescription', u' 有限差分法模拟地下水含水层水头'),
+        [StringStruct(u'FileDescription', u' 认知地下水水流模型软件信息文件'),
         StringStruct(u'FileVersion', u'1, 0, 0, 2'),
-        StringStruct(u'InternalName', u'Calculate hydraulic head'),
-        StringStruct(u'LegalCopyright', u'Personal，Produced by 1005231115 YuLei'),
-        StringStruct(u'OriginalFilename', u'FDM head simulate.exe'),
-        StringStruct(u'ProductName', u'Hydraulic FDM'),
-        StringStruct(u'ProductVersion', u'1.0.0.3')])
+        StringStruct(u'InternalName', u'Cognitive groundwater flow model'),
+        StringStruct(u'LegalCopyright', u'YuLei'),
+        StringStruct(u'OriginalFilename', u'Cognitive groundwater flow model.exe'),
+        StringStruct(u'ProductName', u'认知地下水水流模型软件'),
+        StringStruct(u'ProductVersion', u'1.0.0.1')])
       ]),
     VarFileInfo([VarStruct(u'Translation', [1033, 1200])])
   ]

@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="od">
+    <file>odufp.png</file>
+    <file>odcfp.png</file>
+  </qresource>
+</RCC>

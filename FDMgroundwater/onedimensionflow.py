@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 from ctypes import cdll, c_double, c_int
 
-path_lib = os.getcwd() + '\FDMundergroundwater\juas.dll'
+path_lib = os.getcwd() + '\FDMgroundwater\juas.dll'
 
 # 加载动态链接库
 lib = cdll.LoadLibrary(path_lib)  # 加载动态链接库
@@ -216,10 +216,14 @@ class Unstableflow:
     def l_boundary(self, h_l, Dirichlet=True, Neumann=False, Robin=False):  # 左边界
         if Dirichlet:
             self.h_l = float(h_l)
+        elif Neumann:
+            self.h_l = [2, float(h_l)]
 
     def r_boundary(self, h_r, Dirichlet=True, Neumann=False, Robin=False):  # 右边界
         if Dirichlet:
             self.h_r = float(h_r)
+        elif Neumann:
+            self.h_l = [2, float(h_r)]
 
     def step_length(self, sl):  # X轴差分步长
         self.sl = float(sl)

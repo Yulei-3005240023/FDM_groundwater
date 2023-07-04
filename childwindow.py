@@ -2,8 +2,8 @@ from PySide2.QtWidgets import *
 from PySide2.QtUiTools import *
 from PySide2.QtGui import *
 from PySide2.QtCore import *
-import FDMundergroundwater.onedimensionflow as fo
-import FDMundergroundwater.twodimensionsflow as ft
+import FDMgroundwater.onedimensionflow as fo
+import FDMgroundwater.twodimensionsflow as ft
 import time
 import numpy as np
 import threading
@@ -282,10 +282,22 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
         self.set_time_end_choose_box()
 
     def draw_solve_surface(self):
+        # 判定能否绘图
+        if self.solve_fdm is not None:
+            pass
+        else:
+            QMessageBox.critical(self.ui, '错误', '请先进行数值解计算！')  # 未通过校验即报错
+            return None  # 结束代码
         title = self.how_fdm + '数值解，空间差分步长为' + str(self.flow.sl) + '时间差分步长为' + str(self.flow.st)
         self.flow.draw_surface(self.solve_fdm, title=title)
 
     def draw_solve_line(self):
+        # 判定能否绘图
+        if self.solve_fdm is not None:
+            pass
+        else:
+            QMessageBox.critical(self.ui, '错误', '请先进行数值解计算！')  # 未通过校验即报错
+            return None  # 结束代码
         self.time_location = self.ui.spinBox_time.value()
         title = self.how_fdm + '数值解，空间差分步长为' + str(self.flow.sl) + '时间差分步长为' + str(
             self.flow.st) + '，绘图时刻为第' + str(self.time_location) + '时刻'
@@ -294,6 +306,18 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
         self.flow.draw(self.solve_fdm, time=self.time_location, title=title)
 
     def draw_complete(self):
+        # 判定能否绘图
+        if self.solve_fdm is not None:
+            pass
+        else:
+            QMessageBox.critical(self.ui, '错误', '请先进行数值解计算！')  # 未通过校验即报错
+            return None  # 结束代码
+        # 判定能否绘图
+        if self.solve_as is not None:
+            pass
+        else:
+            QMessageBox.critical(self.ui, '错误', '请先进行解析解计算！')  # 未通过校验即报错
+            return None  # 结束代码
         self.time_location = self.ui.spinBox_time.value()
         title = self.how_fdm + '数值解和傅里叶级数解，空间差分步长为' + str(self.flow.sl) + '时间差分步长为' + str(
             self.flow.st) + '，绘图时刻为第' + str(self.time_location) + '时刻'
@@ -347,11 +371,23 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
         self.set_time_end_choose_box()
 
     def draw_solve_analytic_solution_surface(self):
+        # 判定能否绘图
+        if self.solve_as is not None:
+            pass
+        else:
+            QMessageBox.critical(self.ui, '错误', '请先进行解析解计算！')  # 未通过校验即报错
+            return None  # 结束代码
         title = '傅里叶级数解（傅里叶级数取前' + str(self.fourier_series) + '项)，' + '分配CPU核心' + str(
             self.cpu_cores) + '个'
         self.flow.draw_surface(self.solve_as, title=title)
 
     def draw_solve_analytic_solution_line(self):
+        # 判定能否绘图
+        if self.solve_as is not None:
+            pass
+        else:
+            QMessageBox.critical(self.ui, '错误', '请先进行解析解计算！')  # 未通过校验即报错
+            return None  # 结束代码
         self.time_location = self.ui.spinBox_time.value()
         title = '傅里叶级数解（傅里叶级数取前' + str(self.fourier_series) + '项)，' + '分配CPU核心' + str(
             self.cpu_cores) + '个' + '，绘图时刻为第' + str(self.time_location) + '时刻'
@@ -363,6 +399,12 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
         self.ui.close()
 
     def error_analysis(self):
+        # 分析校验
+        if self.solve_as is not None or self.solve_fdm is not None:
+            pass
+        else:
+            QMessageBox.critical(self.ui, '错误', '请先进行解析解和数值解计算！')  # 未通过校验即报错
+            return None  # 结束代码
         # X轴差分点的数目
         m = int(self.flow.xl / self.flow.sl) + 1
         # 时间轴差分点的数目
@@ -400,6 +442,12 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
         wb.save('缓存/' + self.time + '承压含水层一维非稳定流data.xlsx')
 
     def draw_error(self):
+        # 判定能否绘图
+        if self.solve_as is not None:
+            pass
+        else:
+            QMessageBox.critical(self.ui, '错误', '请先进行误差分析！')  # 未通过校验即报错
+            return None  # 结束代码
         self.flow.draw_surface(self.error, title='绝对误差表面图')
 
     def save_date(self):
@@ -427,15 +475,20 @@ class One_dimension_confined_aquifer_unstable_flow(QMainWindow):
             self.ui.textBrowser.append(
                 '数值解水均衡结果：左边界流量：' + str(hb_list_fdm[0]) + ' 右边界流量：' + str(hb_list_fdm[1]))
             self.ui.textBrowser.append('通过边界流量计算的含水层水量变化：' + str(hb_list_fdm[2]))
-            self.ui.textBrowser.append('通过储水系数计算的含水层水量的变化：' + str(hb_list_fdm[3]))
+            self.ui.textBrowser.append('通过贮水系数计算的含水层水量的变化：' + str(hb_list_fdm[3]))
             self.ui.textBrowser.append('二者比值为：' + str(hb_list_fdm[4]))
+        else:
+            self.ui.textBrowser.append('没有数值解结果！')
         if self.solve_as is not None:
             hb_list_as = self.flow.hydrological_budget_analytic_solution(self.solve_as, t0, t1)
             self.ui.textBrowser.append(
                 '解析解水均衡结果：左边界流量：' + str(hb_list_as[0]) + ' 右边界流量：' + str(hb_list_as[1]))
             self.ui.textBrowser.append('通过边界流量计算的含水层水量变化：' + str(hb_list_as[2]))
-            self.ui.textBrowser.append('通过储水系数计算的含水层水量的变化：' + str(hb_list_as[3]))
+            self.ui.textBrowser.append('通过贮水系数计算的含水层水量的变化：' + str(hb_list_as[3]))
             self.ui.textBrowser.append('二者比值为：' + str(hb_list_as[4]))
+        else:
+            self.ui.textBrowser.append('没有解析解结果！')
+        self.ui.textBrowser.append('')
 
 
 class One_dimension_unconfined_aquifer_stable_flow(QMainWindow):
@@ -674,18 +727,42 @@ class One_dimension_unconfined_aquifer_unstable_flow(QMainWindow):
         self.set_time_end_choose_box()
 
     def draw_solve_surface(self):
+        # 判定能否绘图
+        if self.solve_fdm is not None:
+            pass
+        else:
+            QMessageBox.critical(self.ui, '错误', '请先进行数值解计算！')  # 未通过校验即报错
+            return None  # 结束代码
         title = '数值解，空间差分步长为' + str(self.flow.sl) + '时间差分步长为' + str(self.flow.st)
         self.flow.draw_surface(self.solve_fdm, title=title)
 
     def draw_solve_reference_thickness_method_surface(self):
+        # 判定能否绘图
+        if self.solve_as0 is not None:
+            pass
+        else:
+            QMessageBox.critical(self.ui, '错误', '请先进行参考厚度法解析解计算！')  # 未通过校验即报错
+            return None  # 结束代码
         title = '参考厚度法解析解，空间差分步长为' + str(self.flow.sl) + '时间差分步长为' + str(self.flow.st)
         self.flow.draw_surface(self.solve_as0, title=title)
 
     def draw_solve_square_method_surface(self):
+        # 判定能否绘图
+        if self.solve_as1 is not None:
+            pass
+        else:
+            QMessageBox.critical(self.ui, '错误', '请先进行平方法解析解计算！')  # 未通过校验即报错
+            return None  # 结束代码
         title = '平方法解析解，空间差分步长为' + str(self.flow.sl) + '时间差分步长为' + str(self.flow.st)
         self.flow.draw_surface(self.solve_as1, title=title)
 
     def draw_solve_line(self):
+        # 判定能否绘图
+        if self.solve_fdm is not None:
+            pass
+        else:
+            QMessageBox.critical(self.ui, '错误', '请先进行数值解计算！')  # 未通过校验即报错
+            return None  # 结束代码
         self.time_location = self.ui.spinBox_time.value()
         title = '数值解，空间差分步长为' + str(self.flow.sl) + '时间差分步长为' + str(
             self.flow.st) + '，绘图时刻为第' + str(self.time_location) + '时刻'
@@ -694,6 +771,12 @@ class One_dimension_unconfined_aquifer_unstable_flow(QMainWindow):
         self.ui.textBrowser.append(str(self.solve_fdm[self.time_location]))
 
     def draw_solve_reference_thickness_line(self):
+        # 判定能否绘图
+        if self.solve_as0 is not None:
+            pass
+        else:
+            QMessageBox.critical(self.ui, '错误', '请先进行参考厚度法解析解计算！')  # 未通过校验即报错
+            return None  # 结束代码
         self.time_location = self.ui.spinBox_time.value()
         title = '参考厚度法解析解，空间差分步长为' + str(self.flow.sl) + '时间差分步长为' + str(
             self.flow.st) + '，绘图时刻为第' + str(self.time_location) + '时刻'
@@ -702,6 +785,12 @@ class One_dimension_unconfined_aquifer_unstable_flow(QMainWindow):
         self.ui.textBrowser.append(str(self.solve_as0[self.time_location]))
 
     def draw_solve_square_line(self):
+        # 判定能否绘图
+        if self.solve_as1 is not None:
+            pass
+        else:
+            QMessageBox.critical(self.ui, '错误', '请先进行平方法解析解计算！')  # 未通过校验即报错
+            return None  # 结束代码
         self.time_location = self.ui.spinBox_time.value()
         title = '平方法解析解，空间差分步长为' + str(self.flow.sl) + '时间差分步长为' + str(
             self.flow.st) + '，绘图时刻为第' + str(self.time_location) + '时刻'
@@ -710,6 +799,24 @@ class One_dimension_unconfined_aquifer_unstable_flow(QMainWindow):
         self.ui.textBrowser.append(str(self.solve_as1[self.time_location]))
 
     def draw_complete(self):
+        # 判定能否绘图
+        if self.solve_fdm is not None:
+            pass
+        else:
+            QMessageBox.critical(self.ui, '错误', '请先进行数值解计算！')  # 未通过校验即报错
+            return None  # 结束代码
+            # 判定能否绘图
+        if self.solve_as0 is not None:
+            pass
+        else:
+            QMessageBox.critical(self.ui, '错误', '请先进行参考厚度法解析解计算！')  # 未通过校验即报错
+            return None  # 结束代码
+        # 判定能否绘图
+        if self.solve_as0 is not None:
+            pass
+        else:
+            QMessageBox.critical(self.ui, '错误', '请先进行平方法解析解计算！')  # 未通过校验即报错
+            return None  # 结束代码
         self.time_location = self.ui.spinBox_time.value()
         title = '数值解和傅里叶级数解，空间差分步长为' + str(self.flow.sl) + '时间差分步长为' + str(
             self.flow.st) + '，绘图时刻为第' + str(self.time_location) + '时刻'
@@ -737,22 +844,29 @@ class One_dimension_unconfined_aquifer_unstable_flow(QMainWindow):
             self.ui.textBrowser.append(
                 '数值解水均衡结果：左边界流量：' + str(hb_list_fdm[0]) + ' 右边界流量：' + str(hb_list_fdm[1]))
             self.ui.textBrowser.append('通过边界流量计算的含水层水量变化：' + str(hb_list_fdm[2]))
-            self.ui.textBrowser.append('通过储水系数计算的含水层水量的变化：' + str(hb_list_fdm[3]))
+            self.ui.textBrowser.append('通过给水度计算的含水层水量的变化：' + str(hb_list_fdm[3]))
             self.ui.textBrowser.append('二者比值为：' + str(hb_list_fdm[4]))
+        else:
+            self.ui.textBrowser.append('没有数值解结果！')
         if self.solve_as0 is not None:
             hb_list_as = self.flow.hydrological_budget_analytic_solution(self.solve_as0, t0, t1)
             self.ui.textBrowser.append(
                 '参考厚度法解析解水均衡结果：左边界流量：' + str(hb_list_as[0]) + ' 右边界流量：' + str(hb_list_as[1]))
             self.ui.textBrowser.append('通过边界流量计算的含水层水量变化：' + str(hb_list_as[2]))
-            self.ui.textBrowser.append('通过储水系数计算的含水层水量的变化：' + str(hb_list_as[3]))
+            self.ui.textBrowser.append('通过给水度计算的含水层水量的变化：' + str(hb_list_as[3]))
             self.ui.textBrowser.append('二者比值为：' + str(hb_list_as[4]))
+        else:
+            self.ui.textBrowser.append('没有参考厚度法解析解结果！')
         if self.solve_as1 is not None:
             hb_list_as = self.flow.hydrological_budget_analytic_solution(self.solve_as1, t0, t1)
             self.ui.textBrowser.append(
                 '平方法解析解水均衡结果：左边界流量：' + str(hb_list_as[0]) + ' 右边界流量：' + str(hb_list_as[1]))
             self.ui.textBrowser.append('通过边界流量计算的含水层水量变化：' + str(hb_list_as[2]))
-            self.ui.textBrowser.append('通过储水系数计算的含水层水量的变化：' + str(hb_list_as[3]))
+            self.ui.textBrowser.append('通过给水度计算的含水层水量的变化：' + str(hb_list_as[3]))
             self.ui.textBrowser.append('二者比值为：' + str(hb_list_as[4]))
+        else:
+            self.ui.textBrowser.append('没有平方法解析解结果！')
+        self.ui.textBrowser.append(' ')
 
     def return_main(self):
         self.ui.close()
@@ -801,6 +915,11 @@ class Two_dimension_confined_aquifer_stable_flow(QMainWindow):
         self.ui.textBrowser.append('计算完毕，用时' + str(end_time - start_time) + '秒')
 
     def flow_draw(self):
+        if self.solve_fdm is not None:
+            pass
+        else:
+            QMessageBox.critical(self.ui, '错误', '请先进行数值解计算！')  # 未通过校验即报错
+            return None  # 结束代码
         self.flow.draw(self.solve_fdm)
 
     def return_main(self):
@@ -850,6 +969,11 @@ class Two_dimension_unconfined_aquifer_stable_flow(QMainWindow):
         self.ui.textBrowser.append('计算完毕，用时' + str(end_time - start_time) + '秒')
 
     def flow_draw(self):
+        if self.solve_fdm is not None:
+            pass
+        else:
+            QMessageBox.critical(self.ui, '错误', '请先进行数值解计算！')  # 未通过校验即报错
+            return None  # 结束代码
         self.flow.draw(self.solve_fdm)
 
     def return_main(self):
@@ -911,6 +1035,11 @@ class Two_dimension_confined_aquifer_unstable_flow(QMainWindow):
         self.ui.textBrowser.append('计算完毕，用时' + str(end_time - start_time) + '秒')
 
     def flow_draw(self):
+        if self.h_all_time:
+            pass
+        else:
+            QMessageBox.critical(self.ui, '错误', '请先进行数值解计算！')  # 未通过校验即报错
+            return None  # 结束代码
         self.flow.draw(self.h_all_time[0])  # 绘制初始时刻的水头值
         self.time_all = len(self.h_all_time) - 1
         self.time_location = 0
@@ -994,6 +1123,11 @@ class Two_dimension_unconfined_aquifer_unstable_flow(QMainWindow):
         self.set_time_choose_box()
 
     def draw_solve_surface(self):
+        if self.h_all_time:
+            pass
+        else:
+            QMessageBox.critical(self.ui, '错误', '请先进行数值解计算！')  # 未通过校验即报错
+            return None  # 结束代码
         self.time_location = self.ui.spinBox_time.value()
         title = '数值解，空间差分步长为' + str(self.flow.sl) + '时间差分步长为' + str(
             self.flow.st) + '，绘图时刻为第' + str(self.time_location) + '时刻'

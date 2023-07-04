@@ -11,7 +11,6 @@ from time import time
 
 
 class MainWindow(QMainWindow):
-    # signal_fourier_series_main = Signal(int)  # 创建信号主窗口的傅里叶级数
 
     def __init__(self):
         super().__init__()
@@ -40,8 +39,12 @@ class MainWindow(QMainWindow):
         self.ui.treeWidget.clicked.connect(self.next)
         # 关于程序与算法的列表选择
         self.ui.listWidget_0.clicked.connect(self.algorithm_information)
+        # 解析解的列表选择
+        self.ui.listWidget_2.clicked.connect(self.analytic_solutions_information)
         # 关于使用的地下水概念的列表选择
         self.ui.listWidget_1.clicked.connect(self.undergroundwater_information)
+        # 可以进行的实验列表选择
+        self.ui.listWidget.clicked.connect(self.experiment_information)
         # 实例化具象：设置傅里叶级数
         self.Set_fourier_series_window = cw.Set_fourier_series()
         # 实例化具象：设置解析解运行的cpu核心数
@@ -172,6 +175,38 @@ class MainWindow(QMainWindow):
             self.ui.textBrowser_0.append(
                 '  第二种以潜水Boussinesq方程为例，赋值的时候把x,y,两个维度的水头系数值赋值到一个系数矩阵a中，并使用一次solve函数计算这一时刻的水头值，再使用当前计算的值带入到下一时刻的计算中，连续使用多次计算出所有的水头值。\n  该方法优点是在大量计算时运算速度比上一种方法快，可以解更大的矩阵方程，可以求解非线性方程，缺点是逻辑复杂。\n')
 
+    def analytic_solutions_information(self):
+        item = self.ui.listWidget_2.currentItem()
+        # 清空文本框
+        self.ui.textBrowser_2.clear()
+        if item.whatsThis() == '一维非稳定流承压含水层':
+            self.ui.textBrowser_2.setText(
+                '  在边界长度有限的情况下推荐使用分离变量法进行求解，本程序内部解析解由分离变量法得到，使用C++实现，解析解的形态为无穷多项的傅里叶级数，程序在默认情况下取前1000项。')
+            self.ui.textBrowser_2.append(
+                '  在边界长度无限大的情况下，推荐使用拉普拉斯变换，傅里叶变换进行求解，如果要使用玻尔兹曼变换的化请注意定解方程的初始条件能和无穷远边界条件统一。')
+            self.ui.textBrowser_2.append(
+                '  如果边界条件不为0，方程需要先变换为齐次方程之后在进行求解。《地下水运动方程》王旭升p37')
+            self.ui.textBrowser_2.append('  本程序只有在源汇项为0的时候才可以使用解析解计算！')
+        if item.whatsThis() == '一维非稳定流潜水含水层的参考厚度法':
+            self.ui.textBrowser_2.setText(
+                '  由于潜水含水层的数学方程是非线性的，需要先把方程线性化在进行解析解求解，而数值解不需要线性化，关于Boussinesq方程的线性化技术参考《地下水运动方程》第五章。')
+            self.ui.textBrowser_2.append(
+                '  在边界长度有限的情况下推荐使用分离变量法进行求解，本程序内部解析解由分离变量法得到，使用C++实现，解析解的形态为无穷多项的傅里叶级数，程序在默认情况下取前1000项。')
+            self.ui.textBrowser_2.append(
+                '  在边界长度无限大的情况下，推荐使用拉普拉斯变换，傅里叶变换进行求解，如果要使用玻尔兹曼变换的化请注意定解方程的初始条件能和无穷远边界条件统一。')
+            self.ui.textBrowser_2.append('  程序解析解来源于《地下水运动方程》王旭升p37。')
+        if item.whatsThis() == '一维非稳定流潜水含水层的平方法':
+            self.ui.textBrowser_2.setText(
+                '  由于潜水含水层的数学方程是非线性的，需要先把方程线性化在进行解析解求解，而数值解不需要线性化，关于Boussinesq方程的线性化技术参考《地下水运动方程》第五章。')
+            self.ui.textBrowser_2.setText(
+                '  在边界长度有限的情况下推荐使用分离变量法进行求解，本程序内部解析解由分离变量法得到，使用C++实现，解析解的形态为无穷多项的傅里叶级数，程序在默认情况下取前1000项。')
+            self.ui.textBrowser_2.append(
+                '  在边界长度无限大的情况下，推荐使用拉普拉斯变换，傅里叶变换进行求解，如果要使用玻尔兹曼变换的化请注意定解方程的初始条件能和无穷远边界条件统一。')
+            self.ui.textBrowser_2.append(
+                '  程序解析解来源于《地下水运动方程》王旭升p37所提供的解析解进行平方变换之后得到的。')
+            self.ui.textBrowser_2.append(
+                '  通过于参考厚度法解析解和有限差分法数值解对比，可以发现平方法的解一直要略大于参考厚度法的解，并且更加贴合数值解。')
+
     def undergroundwater_information(self):
         item = self.ui.listWidget_1.currentItem()
         # 清空文本框
@@ -204,6 +239,77 @@ class MainWindow(QMainWindow):
         if item.whatsThis() == '初始条件':
             self.ui.textBrowser_1.setText('初始条件')
             self.ui.textBrowser_1.append('  非稳定流的初始水头条件，表明在水位开始波动前的含水层水头。')
+        if item.whatsThis() == '定水头边界':
+            self.ui.textBrowser_1.setText('定水头边界')
+            self.ui.textBrowser_1.append(
+                '  第一类边界边界条件，这类边界是最常见的是渗流区与地表水体的分界线（面），当边界上水头不随时间改变时，称为定水头边界。')
+        if item.whatsThis() == 'Dupuit假设':
+            self.ui.textBrowser_1.setText('Dupuit假设')
+            self.ui.textBrowser_1.append(
+                '  虽然流动的潜水面不是水平的，但是大多数情况下潜水面的坡度很小，渗流的垂直分速度远远小于水平分速度，而可以忽略垂直分速度，即假定等水头面是铅直面。《地下水动力学》陈崇希p44')
+
+    def experiment_information(self):
+        item = self.ui.listWidget.currentItem()
+        # 清空文本框
+        self.ui.textBrowser.clear()
+        if item.whatsThis() == '承压含水层一维稳定流抛物线型解':
+            self.ui.textBrowser.setText('  选择开始菜单下的打开工程文件，在目录中找到-承压含水层一维稳定流抛物线型解')
+            self.ui.textBrowser.append('  打开左侧对应的水流模型')
+            self.ui.textBrowser.append('  点击计算并绘图，查看水头图像，尝试调试一下源汇项的值，看看有什么变化？')
+            self.ui.textBrowser.append('  对应的数学描述《地下水运动方程》王旭升p11-p12')
+        if item.whatsThis() == '承压含水层一维稳定流对数线性解':
+            self.ui.textBrowser.setText('  选择开始菜单下的打开工程文件，在目录中找到-承压含水层一维稳定流对数线性解')
+            self.ui.textBrowser.append('  打开左侧对应的水流模型')
+            self.ui.textBrowser.append('  点击计算并绘图，查看水头图像，尝试调试一下有关渗透系数的函数，看看有什么变化？')
+            self.ui.textBrowser.append('  对应的数学描述《地下水运动方程》王旭升p13')
+        if item.whatsThis() == '潜水含水层一维稳定流分水岭':
+            self.ui.textBrowser.setText('  选择开始菜单下的打开工程文件，在目录中找到-潜水含水层一维稳定流分水岭')
+            self.ui.textBrowser.append('  打开左侧对应的水流模型')
+            self.ui.textBrowser.append(
+                '  点击计算并绘图，查看水头图像，尝试调试一下源汇项的值，左右边界水头的值，看看分水岭怎么移动，水头曲线有什么变化？')
+            self.ui.textBrowser.append('  对应的数学描述《地下水运动方程》王旭升p15，《地下水动力学》陈崇希p58-p63')
+        if item.whatsThis() == '潜水含水层一维稳定流分水岭':
+            self.ui.textBrowser.setText('  选择开始菜单下的打开工程文件，在目录中找到-潜水含水层一维稳定流分水岭')
+            self.ui.textBrowser.append('  打开左侧对应的水流模型')
+            self.ui.textBrowser.append(
+                '  点击计算并绘图，查看水头图像，尝试调试一下源汇项的值，左右边界水头的值，看看分水岭怎么移动，水头曲线有什么变化？')
+            self.ui.textBrowser.append('  对应的数学描述《地下水运动方程》王旭升p15，《地下水动力学》陈崇希p58-p63')
+        if item.whatsThis() == '对比承压含水层一维非稳定流的解析解和数值解':
+            self.ui.textBrowser.setText(
+                '  选择开始菜单下的打开工程文件，在目录中找到-对比承压含水层一维非稳定流-数值解与解析解对比')
+            self.ui.textBrowser.append('  打开左侧对应的水流模型')
+            self.ui.textBrowser.append(
+                '  分别使用两种数值解计算方式与解析解进行对比，按时刻查看水头图像对比图，分析一下为什么二者的初始条件在左右边界处有较大差异？并且感受一下数值解的离散效果，调试一下导水系数，贮水系数的值，分析一下水头趋于稳定流的速度，同时也可以把参数输入到稳定流水流模型中进行绘图观察。在进行误差比对分析，尝试调试一下差分步长，看看相对误差和均方误差有什么变化？想继续分析误差变化可以选择保存关于误差的excel表格。')
+            self.ui.textBrowser.append('  对应的数学描述《地下水运动方程》王旭升p37')
+        if item.whatsThis() == '对比潜水含水层一维非稳定流的解析解和数值解':
+            self.ui.textBrowser.setText(
+                '  选择开始菜单下的打开工程文件，在目录中找到-潜水含水层一维非稳定流-数值解与解析解对比')
+            self.ui.textBrowser.append('  打开左侧对应的水流模型')
+            self.ui.textBrowser.append(
+                '  分别使用两种解析解计算方式与数值解进行对比，按时刻查看水头图像对比图，尝试调试一下渗透系数，给水度的值，分析一下水头趋于稳定流的速度，同时也可以把参数输入到稳定流水流模型中进行绘图观察。')
+            self.ui.textBrowser.append('  对比一下平方法解析解与参考厚度法解析解的大小，调试绘图时刻，参考厚度，看看两种解析解谁更准确一些？提示：导入的工程文件从第二时刻开始观察。')
+            self.ui.textBrowser.append('  对应的数学描述《地下水运动方程》王旭升p37')
+        if item.whatsThis() == '使用水均衡功能计算和分析边界的流量':
+            self.ui.textBrowser.setText('  选择开始菜单下的打开工程文件，在目录中找到承压含水层一维非稳定流-数值解与解析解对比；潜水含水层一维非稳定流-数值解与解析解对比')
+            self.ui.textBrowser.append('  打开左侧对应的水流模型')
+            self.ui.textBrowser.append(
+                '  进行数值解计算以及解析解计算，选定计算水均衡的时间段，进行水均衡计算观察边界流量以及含水层储存的水量变化。调整初始水位和边界条件在进行计算分析，更改一下空间差分步长和时间差分步长后在计算一下看看结果？')
+            self.ui.textBrowser.append('  对应的数学描述即计算方法思想（数值积分）《地下水动力学》薛禹群p66')
+        if item.whatsThis() == '体验难以计算解析解的地下水水流模型':
+            self.ui.textBrowser.setText('  选择开始菜单下的打开工程文件，在目录中找到-承压含水层二维稳定流与非稳定流对比')
+            self.ui.textBrowser.append('  打开左侧对应的水流模型')
+            self.ui.textBrowser.append('  计算并绘图，观察水头图像，尝试调试一下源汇项的值，左右边界水头的值，水头曲线有什么变化？')
+            self.ui.textBrowser.append('  同样的，你也可以在一维流计算模型中把渗透系数，源汇项设置成非常难以计算解析解的函数，程序会进行数值求解，可以绘图观察水头模型。')
+        if item.whatsThis() == '体验没有解析解的地下水水流模型':
+            self.ui.textBrowser.setText(
+                '  选择开始菜单下的打开工程文件，在目录中找到-潜水含水层二维稳定流与非稳定流对比')
+            self.ui.textBrowser.append('  打开左侧对应的水流模型')
+            self.ui.textBrowser.append('  非线性的潜水Boussinesq方程是没有由初等函数构成的解析解，但是索性有有限差分法，有限单元法所求得的数值解我们可以一睹其真容。')
+            self.ui.textBrowser.append(
+                '  计算并绘图，观察水头图像，尝试调试一下源汇项的函数，左右边界水头的值，水头曲线有什么变化？')
+            self.ui.textBrowser.append(
+                '  同样的，你也可以在一维非稳定流计算模型中把渗透系数，源汇项设置成非常难以计算解析解的函数，程序会进行数值求解，可以绘图观察水头模型。')
+
 
     def toth(self):  # 进入Tóth复杂盆地的部分
         task10 = gevent.spawn(self.toth_difficult_basin_window.ui.show())

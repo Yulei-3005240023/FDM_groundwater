@@ -26,7 +26,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='有限差分法模拟地下水含水层水头',
+    name='认知地下水水流模型',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -48,5 +48,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='有限差分法模拟地下水含水层水头',
+    name='认知地下水水流模型',
 )
