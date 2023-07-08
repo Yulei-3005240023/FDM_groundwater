@@ -287,29 +287,34 @@ class MainWindow(QMainWindow):
             self.ui.textBrowser.append('  打开左侧对应的水流模型')
             self.ui.textBrowser.append(
                 '  分别使用两种解析解计算方式与数值解进行对比，按时刻查看水头图像对比图，尝试调试一下渗透系数，给水度的值，分析一下水头趋于稳定流的速度，同时也可以把参数输入到稳定流水流模型中进行绘图观察。')
-            self.ui.textBrowser.append('  对比一下平方法解析解与参考厚度法解析解的大小，调试绘图时刻，参考厚度，看看两种解析解谁更准确一些？提示：导入的工程文件从第二时刻开始观察。')
+            self.ui.textBrowser.append(
+                '  对比一下平方法解析解与参考厚度法解析解的大小，调试绘图时刻，参考厚度，看看两种解析解谁更准确一些？提示：导入的工程文件从第二时刻开始观察。')
             self.ui.textBrowser.append('  对应的数学描述《地下水运动方程》王旭升p37')
         if item.whatsThis() == '使用水均衡功能计算和分析边界的流量':
-            self.ui.textBrowser.setText('  选择开始菜单下的打开工程文件，在目录中找到承压含水层一维非稳定流-数值解与解析解对比；潜水含水层一维非稳定流-数值解与解析解对比')
+            self.ui.textBrowser.setText(
+                '  选择开始菜单下的打开工程文件，在目录中找到承压含水层一维非稳定流-数值解与解析解对比；潜水含水层一维非稳定流-数值解与解析解对比')
             self.ui.textBrowser.append('  打开左侧对应的水流模型')
             self.ui.textBrowser.append(
                 '  进行数值解计算以及解析解计算，选定计算水均衡的时间段，进行水均衡计算观察边界流量以及含水层储存的水量变化。调整初始水位和边界条件在进行计算分析，更改一下空间差分步长和时间差分步长后在计算一下看看结果？')
             self.ui.textBrowser.append('  对应的数学描述即计算方法思想（数值积分）《地下水动力学》薛禹群p66')
         if item.whatsThis() == '体验难以计算解析解的地下水水流模型':
-            self.ui.textBrowser.setText('  选择开始菜单下的打开工程文件，在目录中找到-承压含水层二维稳定流与非稳定流对比')
+            self.ui.textBrowser.setText(
+                '  选择开始菜单下的打开工程文件，在目录中找到-承压含水层二维稳定流与非稳定流对比')
             self.ui.textBrowser.append('  打开左侧对应的水流模型')
-            self.ui.textBrowser.append('  计算并绘图，观察水头图像，尝试调试一下源汇项的值，左右边界水头的值，水头曲线有什么变化？')
-            self.ui.textBrowser.append('  同样的，你也可以在一维流计算模型中把渗透系数，源汇项设置成非常难以计算解析解的函数，程序会进行数值求解，可以绘图观察水头模型。')
+            self.ui.textBrowser.append(
+                '  计算并绘图，观察水头图像，尝试调试一下源汇项的值，左右边界水头的值，水头曲线有什么变化？')
+            self.ui.textBrowser.append(
+                '  同样的，你也可以在一维流计算模型中把渗透系数，源汇项设置成非常难以计算解析解的函数，程序会进行数值求解，可以绘图观察水头模型。')
         if item.whatsThis() == '体验没有解析解的地下水水流模型':
             self.ui.textBrowser.setText(
                 '  选择开始菜单下的打开工程文件，在目录中找到-潜水含水层二维稳定流与非稳定流对比')
             self.ui.textBrowser.append('  打开左侧对应的水流模型')
-            self.ui.textBrowser.append('  非线性的潜水Boussinesq方程是没有由初等函数构成的解析解，但是索性有有限差分法，有限单元法所求得的数值解我们可以一睹其真容。')
+            self.ui.textBrowser.append(
+                '  非线性的潜水Boussinesq方程是没有由初等函数构成的解析解，但是索性有有限差分法，有限单元法所求得的数值解我们可以一睹其真容。')
             self.ui.textBrowser.append(
                 '  计算并绘图，观察水头图像，尝试调试一下源汇项的函数，左右边界水头的值，水头曲线有什么变化？')
             self.ui.textBrowser.append(
                 '  同样的，你也可以在一维非稳定流计算模型中把渗透系数，源汇项设置成非常难以计算解析解的函数，程序会进行数值求解，可以绘图观察水头模型。')
-
 
     def toth(self):  # 进入Tóth复杂盆地的部分
         task10 = gevent.spawn(self.toth_difficult_basin_window.ui.show())
@@ -320,7 +325,7 @@ class MainWindow(QMainWindow):
         file.write('承压含水层一维稳定流\n')
         # 写入参数
         file.write(self.one_dimension_confined_aquifer_stable_flow_window.ui.transmissivity.toPlainText() + '\n')
-        file.write(self.one_dimension_confined_aquifer_stable_flow_window.ui.leakage_recharge.toPlainText() + '\n')
+        file.write(self.one_dimension_confined_aquifer_stable_flow_window.ui.source_sink_term.toPlainText() + '\n')
         file.write(self.one_dimension_confined_aquifer_stable_flow_window.ui.l_boundary.toPlainText() + '\n')
         file.write(self.one_dimension_confined_aquifer_stable_flow_window.ui.r_boundary.toPlainText() + '\n')
         file.write(self.one_dimension_confined_aquifer_stable_flow_window.ui.length.toPlainText() + '\n')
@@ -332,7 +337,7 @@ class MainWindow(QMainWindow):
         file = open(filepath, mode='r', encoding='utf8')  # 打开文件
         linelist = file.readlines()  # 读取每一行的数据
         self.one_dimension_confined_aquifer_stable_flow_window.ui.transmissivity.setText(linelist[line_number + 1][:-1])
-        self.one_dimension_confined_aquifer_stable_flow_window.ui.leakage_recharge.setText(
+        self.one_dimension_confined_aquifer_stable_flow_window.ui.source_sink_term.setText(
             linelist[line_number + 2][:-1])
         self.one_dimension_confined_aquifer_stable_flow_window.ui.l_boundary.setText(linelist[line_number + 3][:-1])
         self.one_dimension_confined_aquifer_stable_flow_window.ui.r_boundary.setText(linelist[line_number + 4][:-1])
@@ -347,7 +352,7 @@ class MainWindow(QMainWindow):
         # 写入参数
         file.write(self.one_dimension_confined_aquifer_unstable_flow_window.ui.transmissivity.toPlainText() + '\n')
         file.write(self.one_dimension_confined_aquifer_unstable_flow_window.ui.storativity.toPlainText() + '\n')
-        file.write(self.one_dimension_confined_aquifer_unstable_flow_window.ui.leakage_recharge.toPlainText() + '\n')
+        file.write(self.one_dimension_confined_aquifer_unstable_flow_window.ui.source_sink_term.toPlainText() + '\n')
         file.write(self.one_dimension_confined_aquifer_unstable_flow_window.ui.l_boundary.toPlainText() + '\n')
         file.write(self.one_dimension_confined_aquifer_unstable_flow_window.ui.r_boundary.toPlainText() + '\n')
         file.write(self.one_dimension_confined_aquifer_unstable_flow_window.ui.x_length.toPlainText() + '\n')
@@ -364,7 +369,7 @@ class MainWindow(QMainWindow):
         self.one_dimension_confined_aquifer_unstable_flow_window.ui.transmissivity.setText(
             linelist[line_number + 1][:-1])
         self.one_dimension_confined_aquifer_unstable_flow_window.ui.storativity.setText(linelist[line_number + 2][:-1])
-        self.one_dimension_confined_aquifer_unstable_flow_window.ui.leakage_recharge.setText(
+        self.one_dimension_confined_aquifer_unstable_flow_window.ui.source_sink_term.setText(
             linelist[line_number + 3][:-1])
         self.one_dimension_confined_aquifer_unstable_flow_window.ui.l_boundary.setText(linelist[line_number + 4][:-1])
         self.one_dimension_confined_aquifer_unstable_flow_window.ui.r_boundary.setText(linelist[line_number + 5][:-1])
@@ -383,7 +388,7 @@ class MainWindow(QMainWindow):
         # 写入参数
         file.write(
             self.one_dimension_unconfined_aquifer_stable_flow_window.ui.hydraulic_conductivity.toPlainText() + '\n')
-        file.write(self.one_dimension_unconfined_aquifer_stable_flow_window.ui.leakage_recharge.toPlainText() + '\n')
+        file.write(self.one_dimension_unconfined_aquifer_stable_flow_window.ui.source_sink_term.toPlainText() + '\n')
         file.write(self.one_dimension_unconfined_aquifer_stable_flow_window.ui.l_boundary.toPlainText() + '\n')
         file.write(self.one_dimension_unconfined_aquifer_stable_flow_window.ui.r_boundary.toPlainText() + '\n')
         file.write(self.one_dimension_unconfined_aquifer_stable_flow_window.ui.length.toPlainText() + '\n')
@@ -396,7 +401,7 @@ class MainWindow(QMainWindow):
         linelist = file.readlines()  # 读取每一行的数据
         self.one_dimension_unconfined_aquifer_stable_flow_window.ui.hydraulic_conductivity.setText(
             linelist[line_number + 1][:-1])
-        self.one_dimension_unconfined_aquifer_stable_flow_window.ui.leakage_recharge.setText(
+        self.one_dimension_unconfined_aquifer_stable_flow_window.ui.source_sink_term.setText(
             linelist[line_number + 2][:-1])
         self.one_dimension_unconfined_aquifer_stable_flow_window.ui.l_boundary.setText(linelist[line_number + 3][:-1])
         self.one_dimension_unconfined_aquifer_stable_flow_window.ui.r_boundary.setText(linelist[line_number + 4][:-1])
@@ -411,7 +416,7 @@ class MainWindow(QMainWindow):
         # 写入参数
         file.write(
             self.one_dimension_unconfined_aquifer_unstable_flow_window.ui.hydraulic_conductivity.toPlainText() + '\n')
-        file.write(self.one_dimension_unconfined_aquifer_unstable_flow_window.ui.leakage_recharge.toPlainText() + '\n')
+        file.write(self.one_dimension_unconfined_aquifer_unstable_flow_window.ui.source_sink_term.toPlainText() + '\n')
         file.write(self.one_dimension_unconfined_aquifer_unstable_flow_window.ui.l_boundary.toPlainText() + '\n')
         file.write(self.one_dimension_unconfined_aquifer_unstable_flow_window.ui.r_boundary.toPlainText() + '\n')
         file.write(self.one_dimension_unconfined_aquifer_unstable_flow_window.ui.x_length.toPlainText() + '\n')
@@ -430,7 +435,7 @@ class MainWindow(QMainWindow):
         linelist = file.readlines()  # 读取每一行的数据
         self.one_dimension_unconfined_aquifer_unstable_flow_window.ui.hydraulic_conductivity.setText(
             linelist[line_number + 1][:-1])
-        self.one_dimension_unconfined_aquifer_unstable_flow_window.ui.leakage_recharge.setText(
+        self.one_dimension_unconfined_aquifer_unstable_flow_window.ui.source_sink_term.setText(
             linelist[line_number + 2][:-1])
         self.one_dimension_unconfined_aquifer_unstable_flow_window.ui.l_boundary.setText(linelist[line_number + 3][:-1])
         self.one_dimension_unconfined_aquifer_unstable_flow_window.ui.r_boundary.setText(linelist[line_number + 4][:-1])
@@ -453,7 +458,7 @@ class MainWindow(QMainWindow):
         file.write('承压含水层二维稳定流\n')
         # 写入参数
         file.write(self.two_dimension_confined_aquifer_stable_flow_window.ui.transmissivity.toPlainText() + '\n')
-        file.write(self.two_dimension_confined_aquifer_stable_flow_window.ui.leakage_recharge.toPlainText() + '\n')
+        file.write(self.two_dimension_confined_aquifer_stable_flow_window.ui.source_sink_term.toPlainText() + '\n')
         file.write(self.two_dimension_confined_aquifer_stable_flow_window.ui.t_boundary.toPlainText() + '\n')
         file.write(self.two_dimension_confined_aquifer_stable_flow_window.ui.b_boundary.toPlainText() + '\n')
         file.write(self.two_dimension_confined_aquifer_stable_flow_window.ui.l_boundary.toPlainText() + '\n')
@@ -468,7 +473,7 @@ class MainWindow(QMainWindow):
         file = open(filepath, mode='r', encoding='utf8')  # 打开文件
         linelist = file.readlines()  # 读取每一行的数据
         self.two_dimension_confined_aquifer_stable_flow_window.ui.transmissivity.setText(linelist[line_number + 1][:-1])
-        self.two_dimension_confined_aquifer_stable_flow_window.ui.leakage_recharge.setText(
+        self.two_dimension_confined_aquifer_stable_flow_window.ui.source_sink_term.setText(
             linelist[line_number + 2][:-1])
         self.two_dimension_confined_aquifer_stable_flow_window.ui.t_boundary.setText(linelist[line_number + 3][:-1])
         self.two_dimension_confined_aquifer_stable_flow_window.ui.b_boundary.setText(linelist[line_number + 4][:-1])
@@ -485,7 +490,7 @@ class MainWindow(QMainWindow):
         file.write('承压含水层二维非稳定流\n')
         # 写入参数
         file.write(self.two_dimension_confined_aquifer_unstable_flow_window.ui.transmissivity.toPlainText() + '\n')
-        file.write(self.two_dimension_confined_aquifer_unstable_flow_window.ui.leakage_recharge.toPlainText() + '\n')
+        file.write(self.two_dimension_confined_aquifer_unstable_flow_window.ui.source_sink_term.toPlainText() + '\n')
         file.write(self.two_dimension_confined_aquifer_unstable_flow_window.ui.t_boundary.toPlainText() + '\n')
         file.write(self.two_dimension_confined_aquifer_unstable_flow_window.ui.b_boundary.toPlainText() + '\n')
         file.write(self.two_dimension_confined_aquifer_unstable_flow_window.ui.l_boundary.toPlainText() + '\n')
@@ -505,7 +510,7 @@ class MainWindow(QMainWindow):
         linelist = file.readlines()  # 读取每一行的数据
         self.two_dimension_confined_aquifer_unstable_flow_window.ui.transmissivity.setText(
             linelist[line_number + 1][:-1])
-        self.two_dimension_confined_aquifer_unstable_flow_window.ui.leakage_recharge.setText(
+        self.two_dimension_confined_aquifer_unstable_flow_window.ui.source_sink_term.setText(
             linelist[line_number + 2][:-1])
         self.two_dimension_confined_aquifer_unstable_flow_window.ui.t_boundary.setText(linelist[line_number + 3][:-1])
         self.two_dimension_confined_aquifer_unstable_flow_window.ui.b_boundary.setText(linelist[line_number + 4][:-1])
@@ -528,7 +533,7 @@ class MainWindow(QMainWindow):
         # 写入参数
         file.write(
             self.two_dimension_unconfined_aquifer_stable_flow_window.ui.hydraulic_conductivity.toPlainText() + '\n')
-        file.write(self.two_dimension_unconfined_aquifer_stable_flow_window.ui.leakage_recharge.toPlainText() + '\n')
+        file.write(self.two_dimension_unconfined_aquifer_stable_flow_window.ui.source_sink_term.toPlainText() + '\n')
         file.write(self.two_dimension_unconfined_aquifer_stable_flow_window.ui.t_boundary.toPlainText() + '\n')
         file.write(self.two_dimension_unconfined_aquifer_stable_flow_window.ui.b_boundary.toPlainText() + '\n')
         file.write(self.two_dimension_unconfined_aquifer_stable_flow_window.ui.l_boundary.toPlainText() + '\n')
@@ -544,7 +549,7 @@ class MainWindow(QMainWindow):
         linelist = file.readlines()  # 读取每一行的数据
         self.two_dimension_unconfined_aquifer_stable_flow_window.ui.hydraulic_conductivity.setText(
             linelist[line_number + 1][:-1])
-        self.two_dimension_unconfined_aquifer_stable_flow_window.ui.leakage_recharge.setText(
+        self.two_dimension_unconfined_aquifer_stable_flow_window.ui.source_sink_term.setText(
             linelist[line_number + 2][:-1])
         self.two_dimension_unconfined_aquifer_stable_flow_window.ui.t_boundary.setText(linelist[line_number + 3][:-1])
         self.two_dimension_unconfined_aquifer_stable_flow_window.ui.b_boundary.setText(linelist[line_number + 4][:-1])
@@ -562,7 +567,7 @@ class MainWindow(QMainWindow):
         # 写入参数
         file.write(
             self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.hydraulic_conductivity.toPlainText() + '\n')
-        file.write(self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.leakage_recharge.toPlainText() + '\n')
+        file.write(self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.source_sink_term.toPlainText() + '\n')
         file.write(self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.t_boundary.toPlainText() + '\n')
         file.write(self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.b_boundary.toPlainText() + '\n')
         file.write(self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.l_boundary.toPlainText() + '\n')
@@ -582,7 +587,7 @@ class MainWindow(QMainWindow):
         linelist = file.readlines()  # 读取每一行的数据
         self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.hydraulic_conductivity.setText(
             linelist[line_number + 1][:-1])
-        self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.leakage_recharge.setText(
+        self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.source_sink_term.setText(
             linelist[line_number + 2][:-1])
         self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.t_boundary.setText(linelist[line_number + 3][:-1])
         self.two_dimension_unconfined_aquifer_unstable_flow_window.ui.b_boundary.setText(linelist[line_number + 4][:-1])
