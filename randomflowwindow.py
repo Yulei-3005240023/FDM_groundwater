@@ -2,6 +2,10 @@ from PySide2.QtWidgets import *
 from PySide2.QtUiTools import *
 from PySide2.QtGui import *
 from PySide2.QtCore import *
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import FDMgroundwater.randomflow as ra
 import sys
 import time
@@ -57,6 +61,36 @@ class Set_FDM(QDialog):
         self.ui.close()
 
 
+class Set_new_wave(QDialog):
+    # 定义信号
+    signal_wave_parameter = Signal(list)
+
+    def __init__(self):
+        super().__init__()
+        # 从文件中加载ui格式
+        self.ui = QUiLoader().load("ui/Set_new_wave.ui")
+        self.ui.setWindowIcon(QIcon("water.ico"))
+        # 平均每天的降雨量
+        self.we = None
+        # 监测按钮《保存》
+        self.ui.save.clicked.connect(self.save)
+        # 监测按钮《返回》
+        self.ui.back.clicked.connect(self.back)
+        # 设置文本框支持
+        self.ui.textBrowser.append(
+            '振幅不得超过一天的降雨量平均值：' + str(self.we) + '\n计算时长为周期的整数倍，为解析解苛求条件。')
+
+    def save(self):
+        amplitude = self.ui.doubleSpinBox_amplitude.value()
+        cycle = self.ui.doubleSpinBox_cycle.value()
+        wave_parameter = [amplitude, cycle]
+        self.signal_wave_parameter.emit(wave_parameter)
+        print(self.we)
+
+    def back(self):
+        self.ui.close()
+
+
 class Random_one_dimension_boussinesq_window(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -83,6 +117,33 @@ class Random_one_dimension_boussinesq_window(QMainWindow):
         self.ui.actionSet_FDM.triggered.connect(self.actionSet_FDM_parameter)
         # 计算得到的水头存储
         self.solve_fdm = None
+        # 绘图选定时刻存放
+        self.time_location = None
+        # 监测降雨量期望变化
+        self.ui.doubleSpinBox_rain.valueChanged.connect(self.Set_rain_expectation)
+        # 监测按钮《绘制数值解线性图》
+        self.ui.draw_solve_line.clicked.connect(self.draw_solve_line)
+
+        # 监测按钮《新建一个降雨量波动》
+        self.ui.new_wave.clicked.connect(self.Set_new_wave)
+        # 实例化具象：新建降雨量波动
+        self.Set_new_wave_window = Set_new_wave()
+        # 降雨量波动函数
+        self.rain_function = None
+        # 降雨量波动存放
+        self.wave_list = []
+        # 监测按钮《随机新建一个降雨量波动》
+        # 监测按钮《删除上一个降雨量波动》
+        self.ui.delete_wave.clicked.connect(self.delete_wave)
+
+        # 创建Matplotlib绘图的Figure对象和Canvas对象(水头)
+        # self.figure_head = plt.figure()
+        # self.canvas_head = FigureCanvas(self.figure_head)
+
+        # 创建Matplotlib工具栏并添加到主窗口
+        # self.ui.toolbar = NavigationToolbar(self.canvas_head, self)
+        # self.ui.addToolBar(self.ui.toolbar)
+
         # 获取当前系统时间戳
         t = time.localtime()
         # 日志时间
@@ -106,7 +167,34 @@ class Random_one_dimension_boussinesq_window(QMainWindow):
     def get_FDM_parameter(self, FDM_parameter):  # 主窗口获得数值解求解参数的槽函数
         self.flow.step_length(FDM_parameter[0])
         self.flow.step_time(FDM_parameter[1])
-        print(self.flow.st)
+
+    def Set_rain_expectation(self):
+        self.flow.source_sink_expectation(self.ui.doubleSpinBox_rain.value() / (1000 * 365))  # 一年的降雨量期望转化为一天的
+        self.flow.source_sink_term(str(self.ui.doubleSpinBox_rain.value()))
+        self.ui.textBrowser_rain_function.clear()  # 重置展示降雨量函数的框
+        self.rain_function = str(self.ui.doubleSpinBox_rain.value() / (1000 * 365))
+        self.ui.textBrowser_rain_function.append(self.rain_function)
+
+    def Set_new_wave(self):
+        self.Set_new_wave_window.we = (self.ui.doubleSpinBox_rain.value() / 365)  # 一年的降雨量期望转化为一天的
+        self.Set_new_wave_window.ui.show()
+        self.Set_new_wave_window.signal_wave_parameter.connect(self.get_wave_parameter)
+
+    def get_wave_parameter(self, wave_parameter):  # 主窗口获得波动设置参数的槽函数
+        self.wave_list.append('+' + str(wave_parameter[0]) + '*sin(' + str(2 * 3.1415 / wave_parameter[1]) + 't)')
+        self.rain_function = str(self.ui.doubleSpinBox_rain.value() / (1000 * 365))
+        for i in self.wave_list:
+            self.rain_function += i
+        self.ui.textBrowser_rain_function.clear()
+        self.ui.textBrowser_rain_function.append(self.rain_function)
+
+    def delete_wave(self):
+        del self.wave_list[-1]
+        self.rain_function = str(self.ui.doubleSpinBox_rain.value() / (1000 * 365))
+        for i in self.wave_list:
+            self.rain_function += i
+        self.ui.textBrowser_rain_function.clear()
+        self.ui.textBrowser_rain_function.append(self.rain_function)
 
     def left_boundary(self):
         if self.ui.comboBox_left_boundary.currentText() == '一类边界（给定水头）':
@@ -132,13 +220,16 @@ class Random_one_dimension_boussinesq_window(QMainWindow):
         self.left_boundary()
         self.right_boundary()
         self.flow.initial_condition(self.ui.initial_condition.toPlainText())
-        self.flow.x_length(self.ui.x_length.toPlainText())
-        self.flow.t_length(self.ui.t_length.toPlainText())
+        self.flow.x_length(self.ui.spinBox_x_length.value())
+        self.flow.t_length(self.ui.spinBox_t_length.value())
+        self.flow.source_sink_term(self.ui.textBrowser_rain_function.toPlainText())
         self.ui.textBrowser.append('正在进行数值解求解')
         start_time = time.perf_counter()
         self.solve_fdm = self.flow.solve()
         end_time = time.perf_counter()
         self.ui.textBrowser.append('计算完毕，用时' + str(end_time - start_time) + '秒')
+        # 设置时刻选择条
+        self.set_time_choose_box()
 
     def set_time_choose_box(self):  # 设置时刻选择条
         time_all = int(self.flow.tl / self.flow.st) + 1
@@ -146,6 +237,25 @@ class Random_one_dimension_boussinesq_window(QMainWindow):
         self.ui.textBrowser_time.setPlainText(
             '计算时长为：' + str(self.flow.tl) + '天，时间分割步长为：' + str(self.flow.st) + '天，共计有时刻' + str(
                 time_all) + '个。')
+
+    # def draw_rain_function(self):
+
+    def draw_head_line(self):
+        self.time_location = self.ui.spinBox_time.value()
+        title = '数值解，空间差分步长为' + str(self.flow.sl) + '时间差分步长为' + str(
+            self.flow.st) + '，绘图时刻为第' + str(self.time_location) + '时刻'
+        self.flow.draw(self.solve_fdm, time=self.time_location, title=title)
+
+    def draw_solve_line(self):
+        # 判定能否绘图
+        if self.solve_fdm is not None:
+            pass
+        else:
+            QMessageBox.critical(self.ui, '错误', '请先进行数值解计算！')  # 未通过校验即报错
+            return None  # 结束代码
+        self.draw_head_line()
+        self.ui.textBrowser.append('第' + str(self.time_location) + '时刻数值解绘图，当前时刻各点解值为：')
+        self.ui.textBrowser.append(str(self.solve_fdm[self.time_location]))
 
 
 # 按间距中的绿色按钮以运行脚本。

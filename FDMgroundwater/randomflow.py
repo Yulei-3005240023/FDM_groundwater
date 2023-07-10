@@ -156,7 +156,7 @@ class Random_one_dimension_boussinesq(Random_flow):
     def source_sink_expectation(self, we):  # 源汇项期望值的设定
         self.we = float(we)
 
-    def source_sink_term(self, w: str):  # 潜水含水层源汇项的设定，可以为一个常数也可以为带有前缀为sy.的函数,如sy.sin(x) + sy.cos(y)
+    def source_sink_term(self, w: str):  # 潜水含水层源汇项的设定，可以为一个常数也可以为函数,如sin(x) + cos(t)
         self.w = w
 
     def hydraulic_conductivity(self, K):  # 潜水含水层渗透系数的设定
@@ -168,7 +168,11 @@ class Random_one_dimension_boussinesq(Random_flow):
     def random_w(self):
         # 随机振幅生成
         amplitude = random.uniform(0, self.we)
-        # 随机频率生成
+        # 随机周期生成
+        cycle = self.tl / int(random.uniform(0, 50))
+        # 随机频率
+        frequency = 2 * 3.1415 / cycle
+        return amplitude, cycle, frequency
 
     def solve(self):
         # 如果未设定压力扩散系数
@@ -303,8 +307,14 @@ if __name__ == "__main__":
     flow.h_l = [1, 60]
     flow.Sy = 0.08
     flow.K = 10
+    flow.we = 0.4
     # flow.w = '0'
     flow.w = '0.4/36 + 0.1/36 * np.sin(3.1415*t/200) + 0.05/36 * np.sin(3.1415*t/10)'
     h = flow.solve()
     # flow.draw(H_ALL=h, time=0)
+    a, b, c = flow.random_w()
+    print(a)
+    print(b)
+    print(c)
+
     flow.draw_surface(H_ALL=h)

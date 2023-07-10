@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1000</width>
-    <height>750</height>
+    <width>1002</width>
+    <height>747</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -27,7 +27,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>2</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -201,64 +201,12 @@
      <attribute name="title">
       <string>源汇项设置</string>
      </attribute>
-     <widget class="QWidget" name="horizontalLayoutWidget_4">
-      <property name="geometry">
-       <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>420</width>
-        <height>41</height>
-       </rect>
-      </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_4">
-       <item>
-        <widget class="QLabel" name="label_2">
-         <property name="text">
-          <string>以年平均降雨量代表源汇项的期望值（mm/a）:</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QDoubleSpinBox" name="doubleSpinBox_rain">
-         <property name="maximum">
-          <double>9999.989999999999782</double>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="horizontalLayoutWidget_5">
-      <property name="geometry">
-       <rect>
-        <x>40</x>
-        <y>120</y>
-        <width>312</width>
-        <height>41</height>
-       </rect>
-      </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_5">
-       <item>
-        <widget class="QPushButton" name="pushButton_4">
-         <property name="text">
-          <string>新建一个降雨量波动</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="pushButton_5">
-         <property name="text">
-          <string>删除上一个降雨量波动</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
      <widget class="QWidget" name="verticalLayoutWidget_3">
       <property name="geometry">
        <rect>
-        <x>430</x>
+        <x>420</x>
         <y>0</y>
-        <width>261</width>
+        <width>271</width>
         <height>146</height>
        </rect>
       </property>
@@ -266,12 +214,12 @@
        <item>
         <widget class="QLabel" name="label_7">
          <property name="text">
-          <string>当前降雨量函数：</string>
+          <string>当前降雨量函数(m)：</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QTextBrowser" name="textBrowser_2"/>
+        <widget class="QTextBrowser" name="textBrowser_rain_function"/>
        </item>
        <item>
         <widget class="QPushButton" name="pushButton_6">
@@ -282,28 +230,84 @@
        </item>
       </layout>
      </widget>
-     <widget class="QListView" name="listView">
-      <property name="geometry">
-       <rect>
-        <x>0</x>
-        <y>40</y>
-        <width>421</width>
-        <height>81</height>
-       </rect>
-      </property>
-     </widget>
      <widget class="QWidget" name="verticalLayoutWidget_4">
       <property name="geometry">
        <rect>
-        <x>690</x>
+        <x>700</x>
         <y>0</y>
-        <width>281</width>
-        <height>161</height>
+        <width>271</width>
+        <height>151</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_4">
        <item>
-        <widget class="QWidget" name="widget_rain_flow" native="true"/>
+        <widget class="QWidget" name="widget_rain_flow" native="true">
+         <widget class="QGraphicsView" name="graphicsView_rain_flow">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>281</width>
+            <height>151</height>
+           </rect>
+          </property>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="verticalLayoutWidget_6">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>411</width>
+        <height>161</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_5">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <item>
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>以年平均降雨量代表源汇项的期望值（mm/a）:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_rain">
+           <property name="maximum">
+            <double>9999.989999999999782</double>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_5">
+         <item>
+          <widget class="QPushButton" name="random_new_wave">
+           <property name="text">
+            <string>随机新建一个降雨量波动</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="new_wave">
+           <property name="text">
+            <string>手动新建一个降雨量波动</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QPushButton" name="delete_wave">
+         <property name="text">
+          <string>删除上一个降雨量波动</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -338,45 +342,6 @@
        </item>
       </layout>
      </widget>
-     <widget class="QPushButton" name="draw_solve_line_2">
-      <property name="geometry">
-       <rect>
-        <x>330</x>
-        <y>0</y>
-        <width>317</width>
-        <height>28</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>绘制选定时刻的数值解线型图</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="draw_solve_reference_thickness_line_2">
-      <property name="geometry">
-       <rect>
-        <x>330</x>
-        <y>30</y>
-        <width>317</width>
-        <height>28</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>绘制选定时刻的参考厚度法解析解线型图</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="draw_complete_2">
-      <property name="geometry">
-       <rect>
-        <x>330</x>
-        <y>60</y>
-        <width>317</width>
-        <height>28</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>绘制数值解和解析解对比图</string>
-      </property>
-     </widget>
      <widget class="QWidget" name="gridLayoutWidget_2">
       <property name="geometry">
        <rect>
@@ -406,19 +371,51 @@
        </item>
       </layout>
      </widget>
-     <widget class="QPushButton" name="pushButton_7">
+     <widget class="QWidget" name="verticalLayoutWidget_7">
       <property name="geometry">
        <rect>
-        <x>330</x>
-        <y>90</y>
-        <width>311</width>
-        <height>28</height>
+        <x>320</x>
+        <y>0</y>
+        <width>251</width>
+        <height>151</height>
        </rect>
       </property>
-      <property name="text">
-       <string>绘制《位置-水头-时间》三维图</string>
-      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_6">
+       <item>
+        <widget class="QPushButton" name="draw_solve_line">
+         <property name="text">
+          <string>绘制选定时刻的数值解线型图</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="draw_solve_reference_thickness_line_2">
+         <property name="text">
+          <string>绘制选定时刻的解析解线型图</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="draw_complete_2">
+         <property name="text">
+          <string>绘制数值解和解析解对比图</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="draw_surface">
+         <property name="text">
+          <string>绘制《位置-水头-时间》三维图</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
+    </widget>
+    <widget class="QWidget" name="tab_4">
+     <attribute name="title">
+      <string>页</string>
+     </attribute>
     </widget>
    </widget>
    <widget class="QWidget" name="verticalLayoutWidget">
@@ -468,14 +465,14 @@ p, li { white-space: pre-wrap; }
     <property name="geometry">
      <rect>
       <x>290</x>
-      <y>190</y>
+      <y>200</y>
       <width>691</width>
       <height>491</height>
      </rect>
     </property>
-    <layout class="QVBoxLayout" name="verticalLayout_5">
+    <layout class="QVBoxLayout" name="verticalLayout_head">
      <item>
-      <widget class="QWidget" name="widget" native="true"/>
+      <widget class="QGraphicsView" name="graphicsView_head"/>
      </item>
     </layout>
    </widget>
@@ -485,7 +482,7 @@ p, li { white-space: pre-wrap; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1000</width>
+     <width>1002</width>
      <height>26</height>
     </rect>
    </property>
