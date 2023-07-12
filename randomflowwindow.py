@@ -3,6 +3,7 @@ from PySide2.QtUiTools import *
 from PySide2.QtGui import *
 from PySide2.QtCore import *
 import numpy as np
+from numpy import sin
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
@@ -76,16 +77,12 @@ class Set_new_wave(QDialog):
         self.ui.save.clicked.connect(self.save)
         # 监测按钮《返回》
         self.ui.back.clicked.connect(self.back)
-        # 设置文本框支持
-        self.ui.textBrowser.append(
-            '振幅不得超过一天的降雨量平均值：' + str(self.we) + '\n计算时长为周期的整数倍，为解析解苛求条件。')
 
     def save(self):
         amplitude = self.ui.doubleSpinBox_amplitude.value()
         cycle = self.ui.doubleSpinBox_cycle.value()
         wave_parameter = [amplitude, cycle]
         self.signal_wave_parameter.emit(wave_parameter)
-        print(self.we)
 
     def back(self):
         self.ui.close()
@@ -126,15 +123,18 @@ class Random_one_dimension_boussinesq_window(QMainWindow):
 
         # 监测按钮《新建一个降雨量波动》
         self.ui.new_wave.clicked.connect(self.Set_new_wave)
+        # 监测按钮《随机新建一个降雨量波动》
+        self.ui.random_new_wave.clicked.connect(self.random_new_wave)
         # 实例化具象：新建降雨量波动
         self.Set_new_wave_window = Set_new_wave()
         # 降雨量波动函数
         self.rain_function = None
         # 降雨量波动存放
         self.wave_list = []
-        # 监测按钮《随机新建一个降雨量波动》
         # 监测按钮《删除上一个降雨量波动》
         self.ui.delete_wave.clicked.connect(self.delete_wave)
+        # 监测按钮《查看时域图像》
+        self.ui.time_space_figure.clicked.connect(self.draw_rain_function)
 
         # 创建Matplotlib绘图的Figure对象和Canvas对象(水头)
         # self.figure_head = plt.figure()
@@ -172,17 +172,23 @@ class Random_one_dimension_boussinesq_window(QMainWindow):
         self.flow.source_sink_expectation(self.ui.doubleSpinBox_rain.value() / (1000 * 365))  # 一年的降雨量期望转化为一天的
         self.flow.source_sink_term(str(self.ui.doubleSpinBox_rain.value()))
         self.ui.textBrowser_rain_function.clear()  # 重置展示降雨量函数的框
+        self.wave_list = []  # 重置降雨量波动列表
         self.rain_function = str(self.ui.doubleSpinBox_rain.value() / (1000 * 365))
         self.ui.textBrowser_rain_function.append(self.rain_function)
 
     def Set_new_wave(self):
         self.Set_new_wave_window.we = (self.ui.doubleSpinBox_rain.value() / 365)  # 一年的降雨量期望转化为一天的
+        # 设置文本框支持
+        self.Set_new_wave_window.ui.textBrowser.clear()
+        self.Set_new_wave_window.ui.textBrowser.append(
+            '振幅不得超过一天的降雨量平均值：' + str(
+                self.Set_new_wave_window.we) + '\n计算时长为周期的整数倍，为解析解苛求条件。\n根据香农采样定理采样频率必须大于信号频率的两倍。\n所以降雨波动信号的周期确定生成必须大于采样周期的两倍，建议取三倍')
         self.Set_new_wave_window.ui.show()
         self.Set_new_wave_window.signal_wave_parameter.connect(self.get_wave_parameter)
 
     def get_wave_parameter(self, wave_parameter):  # 主窗口获得波动设置参数的槽函数
-        self.wave_list.append('+' + str(wave_parameter[0]) + '*sin(' + str(2 * 3.1415 / wave_parameter[1]) + 't)')
-        self.rain_function = str(self.ui.doubleSpinBox_rain.value() / (1000 * 365))
+        self.wave_list.append('+' + str(wave_parameter[0]/1000) + '*sin(' + str(2 * 3.1415 / wave_parameter[1]) + '*t)')
+        self.rain_function = str(self.ui.doubleSpinBox_rain.value() / (1000 * 365))  # 重置降雨量函数
         for i in self.wave_list:
             self.rain_function += i
         self.ui.textBrowser_rain_function.clear()
@@ -190,6 +196,16 @@ class Random_one_dimension_boussinesq_window(QMainWindow):
 
     def delete_wave(self):
         del self.wave_list[-1]
+        self.rain_function = str(self.ui.doubleSpinBox_rain.value() / (1000 * 365))  # 重置降雨量函数
+        for i in self.wave_list:
+            self.rain_function += i
+        self.ui.textBrowser_rain_function.clear()
+        self.ui.textBrowser_rain_function.append(self.rain_function)
+
+    def random_new_wave(self):
+        self.flow.t_length(self.ui.spinBox_t_length.value())
+        amplitude, cycle, frequency = self.flow.random_w()
+        self.wave_list.append('+' + str(amplitude) + '*sin(' + str(2 * 3.1415 / frequency) + '*t)')
         self.rain_function = str(self.ui.doubleSpinBox_rain.value() / (1000 * 365))
         for i in self.wave_list:
             self.rain_function += i
@@ -201,7 +217,7 @@ class Random_one_dimension_boussinesq_window(QMainWindow):
             self.flow.l_boundary(self.ui.doubleSpinBox_left_boundary.value(), Dirichlet=True)
             self.ui.textBrowser.append(
                 '左边界（给定水头边界）：\n水头值为：' + str(self.ui.doubleSpinBox_left_boundary.value()))
-        else:
+        elif self.ui.comboBox_left_boundary.currentText() == '二类边界（给定通量）':
             self.flow.l_boundary(self.ui.doubleSpinBox_left_boundary.value(), Neumann=True)
             self.ui.textBrowser.append(
                 '左边界（给定通量边界）：\n通量值为：' + str(self.ui.doubleSpinBox_left_boundary.value()))
@@ -211,7 +227,7 @@ class Random_one_dimension_boussinesq_window(QMainWindow):
             self.flow.r_boundary(self.ui.doubleSpinBox_right_boundary.value(), Dirichlet=True)
             self.ui.textBrowser.append(
                 '右边界（给定水头边界）：\n水头值为：' + str(self.ui.doubleSpinBox_right_boundary.value()))
-        else:
+        elif self.ui.comboBox_right_boundary.currentText() == '二类边界（给定通量）':
             self.flow.r_boundary(self.ui.doubleSpinBox_right_boundary.value(), Neumann=True)
             self.ui.textBrowser.append(
                 '右边界（给定通量边界）：\n通量值为：' + str(self.ui.doubleSpinBox_right_boundary.value()))
@@ -238,7 +254,24 @@ class Random_one_dimension_boussinesq_window(QMainWindow):
             '计算时长为：' + str(self.flow.tl) + '天，时间分割步长为：' + str(self.flow.st) + '天，共计有时刻' + str(
                 time_all) + '个。')
 
-    # def draw_rain_function(self):
+    def draw_rain_function(self):
+        self.flow.t_length(self.ui.spinBox_t_length.value())
+        # T轴单元格的数目
+        m = int(self.flow.tl / self.flow.sl) + 1
+        # T轴
+        t = np.linspace(0, self.flow.tl, m)
+        # 降雨量
+        w = eval(self.rain_function)
+        # 可以plt绘图过程中中文无法显示的问题
+        plt.rcParams['font.sans-serif'] = ['SimHei']
+        # 解决负号为方块的问题
+        plt.rcParams['axes.unicode_minus'] = False
+        fig = plt.figure(figsize=(5, 3))
+        ax = fig.add_subplot()
+        ax.plot(t, w, linewidth=1, antialiased=True)
+        ax.set(ylabel='降雨量（m）', xlabel='时间轴（m）')
+        plt.title('降雨量时域图像')
+        plt.show()
 
     def draw_head_line(self):
         self.time_location = self.ui.spinBox_time.value()

@@ -27,7 +27,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -207,7 +207,7 @@
         <x>420</x>
         <y>0</y>
         <width>271</width>
-        <height>146</height>
+        <height>148</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -222,11 +222,22 @@
         <widget class="QTextBrowser" name="textBrowser_rain_function"/>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_6">
-         <property name="text">
-          <string>查看当前设置的降雨量图像</string>
-         </property>
-        </widget>
+        <layout class="QHBoxLayout" name="horizontalLayout_8">
+         <item>
+          <widget class="QPushButton" name="time_space_figure">
+           <property name="text">
+            <string>查看时域图像</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_4">
+           <property name="text">
+            <string>查看频域图像</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
       </layout>
      </widget>
@@ -245,9 +256,9 @@
          <widget class="QGraphicsView" name="graphicsView_rain_flow">
           <property name="geometry">
            <rect>
-            <x>0</x>
+            <x>-10</x>
             <y>0</y>
-            <width>281</width>
+            <width>291</width>
             <height>151</height>
            </rect>
           </property>
@@ -261,7 +272,7 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>411</width>
+        <width>421</width>
         <height>161</height>
        </rect>
       </property>
@@ -271,14 +282,14 @@
          <item>
           <widget class="QLabel" name="label_2">
            <property name="text">
-            <string>以年平均降雨量代表源汇项的期望值（mm/a）:</string>
+            <string>以年平均降雨量代表源汇项的期望值(mm/a):</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QDoubleSpinBox" name="doubleSpinBox_rain">
            <property name="maximum">
-            <double>9999.989999999999782</double>
+            <double>99999.990000000005239</double>
            </property>
           </widget>
          </item>

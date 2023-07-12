@@ -1,5 +1,6 @@
 # 地下水流随机方程的数值模拟求解尝试
 import random
+from scipy.fftpack import fft, ifft
 
 import numpy as np
 from numpy import sin, cos, tan
@@ -20,21 +21,21 @@ class Random_flow:
         self.name_chinese = "非稳定随机一维流"
         self.xl = None
         self.sl = None
-        self.h_r = None
-        self.h_l = None
+        self.h_r = []
+        self.h_l = []
         self.B = 1  # 默认一维流的宽度为1个单位
 
-    def l_boundary(self, h_l, Dirichlet=True, Neumann=False, Robin=False):  # 左边界
+    def l_boundary(self, h_l, Dirichlet=False, Neumann=False, Robin=False):  # 左边界
         if Dirichlet:
             self.h_l = [1, float(h_l)]
         elif Neumann:
             self.h_l = [2, float(h_l)]
 
-    def r_boundary(self, h_r, Dirichlet=True, Neumann=False, Robin=False):  # 右边界
+    def r_boundary(self, h_r, Dirichlet=False, Neumann=False, Robin=False):  # 右边界
         if Dirichlet:
             self.h_r = [1, float(h_r)]
         elif Neumann:
-            self.h_l = [2, float(h_r)]
+            self.h_r = [2, float(h_r)]
 
     def step_length(self, sl):  # X轴差分步长
         self.sl = float(sl)
@@ -159,6 +160,14 @@ class Random_one_dimension_boussinesq(Random_flow):
     def source_sink_term(self, w: str):  # 潜水含水层源汇项的设定，可以为一个常数也可以为函数,如sin(x) + cos(t)
         self.w = w
 
+    def fft_source_sink_term(self):  # 对源汇项做快速傅里叶变换
+        # 时间轴单元格数目
+        n = int(self.tl / self.st) + 1
+        # 时间轴
+        t = np.linspace(0, self.tl, n)
+        fft_w = fft(eval(self.w))
+        return fft_w
+
     def hydraulic_conductivity(self, K):  # 潜水含水层渗透系数的设定
         self.K = float(K)
 
@@ -169,9 +178,12 @@ class Random_one_dimension_boussinesq(Random_flow):
         # 随机振幅生成
         amplitude = random.uniform(0, self.we)
         # 随机周期生成
-        cycle = self.tl / int(random.uniform(0, 50))
+        while True:
+            cycle = self.tl / int(random.uniform(0, 50))  # 依据香农采样定理采样频率必须大于信号频率的两倍
+            if cycle >= 3 * self.st:  # 所以信号周期的随机生成必须大于采样周期的两倍，本程序取三倍
+                break
         # 随机频率
-        frequency = 2 * 3.1415 / cycle
+        frequency = 1 / cycle
         return amplitude, cycle, frequency
 
     def solve(self):
@@ -229,7 +241,7 @@ class Random_one_dimension_boussinesq(Random_flow):
                         # 源汇项赋值
                         H_b[l_a] = - W(i * self.sl, k * self.st) - self.Sy / (self.K * self.st) * H_ALL[
                             k - 1, i] - 2 * self.sl * self.h_l[1] * (
-                                               H_previous_iteration[i] + self.h_l[1] * 0.5 * self.sl) / (
+                                           H_previous_iteration[i] + self.h_l[1] * 0.5 * self.sl) / (
                                            self.sl * self.sl)
                         # 给位置为(i, k)处的水头赋上系数值
                         H_a[l_a, l_a] = -(H_previous_iteration[i + 1] + H_previous_iteration[i]) / (
@@ -248,7 +260,7 @@ class Random_one_dimension_boussinesq(Random_flow):
                         # 源汇项赋值
                         H_b[l_a] = - W(i * self.sl, k * self.st) - self.Sy / (self.K * self.st) * H_ALL[
                             k - 1, i] + 2 * self.sl * self.h_r[1] * (
-                                               H_previous_iteration[i] + self.h_r[1] * 0.5 * self.sl) / (
+                                           H_previous_iteration[i] + self.h_r[1] * 0.5 * self.sl) / (
                                            self.sl * self.sl)
                         # 给位置为(i, k)处的水头赋上系数值
                         H_a[l_a, l_a] = - (H_previous_iteration[i] + self.h_r[1] * 0.5 * self.sl) / (
@@ -309,12 +321,15 @@ if __name__ == "__main__":
     flow.K = 10
     flow.we = 0.4
     # flow.w = '0'
-    flow.w = '0.4/36 + 0.1/36 * np.sin(3.1415*t/200) + 0.05/36 * np.sin(3.1415*t/10)'
+    flow.w = '0.4/36 + 0.1/36 * sin(3.1415*t/200) + 0.05/36 * sin(3.1415*t/10)'
+    d = flow.fft_source_sink_term()
     h = flow.solve()
     # flow.draw(H_ALL=h, time=0)
     a, b, c = flow.random_w()
-    print(a)
-    print(b)
-    print(c)
+    # print(a)
+    # print(b)
+    # print(c)
+
+    print(len(d))
 
     flow.draw_surface(H_ALL=h)
