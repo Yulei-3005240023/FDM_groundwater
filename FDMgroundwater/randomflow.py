@@ -91,6 +91,31 @@ class Random_flow:
             plt.title(title)
         plt.show()
 
+    def draw_location(self, H_ALL: np.ndarray, location=0, title=''):  # 按给定的时刻绘制水头曲线
+        # T轴单元格的数目
+        m = int(self.tl / self.st) + 1
+        # T轴
+        T = np.linspace(0, self.tl, m)
+        # 水头轴
+        H = []
+        for i in H_ALL:
+            H.append(i[location])
+        # 可以plt绘图过程中中文无法显示的问题
+        plt.rcParams['font.sans-serif'] = ['SimHei']
+        # 解决负号为方块的问题
+        plt.rcParams['axes.unicode_minus'] = False
+        fig = plt.figure(figsize=(10, 7))
+        ax = fig.add_subplot()
+        ax.plot(T, H, linewidth=1, antialiased=True)
+        ax.set_ylim(min(H) - 1, max(H) + 1)
+        ax.set(ylabel='水头（m）', xlabel='时间轴（d）')
+        plt.suptitle(self.name_chinese)
+        if title == '':
+            plt.title("差分数值解，当前为第{0}位置(差分空间步长{1}，时间步长{2})".format(location, self.sl, self.st))
+        else:
+            plt.title(title)
+        plt.show()
+
     def draw_surface(self, H_ALL: np.ndarray, title=''):  # 绘制表面图
         # X轴单元格的数目
         m = int(self.xl / self.sl) + 1
@@ -168,6 +193,15 @@ class Random_one_dimension_boussinesq(Random_flow):
         fft_w = fft(eval(self.w))
         return fft_w
 
+    @staticmethod
+    def fft_location(H_ALL: np.ndarray, location=0):  # 对一个位置的不同时刻水头做快速傅里叶变换
+        # 同一位置不同时刻的离散水头
+        H = []
+        for i in H_ALL:
+            H.append(i[location])
+        fft_H = fft(H)
+        return fft_H
+
     def hydraulic_conductivity(self, K):  # 潜水含水层渗透系数的设定
         self.K = float(K)
 
@@ -179,7 +213,7 @@ class Random_one_dimension_boussinesq(Random_flow):
         amplitude = random.uniform(0, self.we)
         # 随机周期生成
         while True:
-            cycle = self.tl / int(random.uniform(0, 50))  # 依据香农采样定理采样频率必须大于信号频率的两倍
+            cycle = self.tl / int(random.uniform(1, 50))  # 依据香农采样定理采样频率必须大于信号频率的两倍
             if cycle >= 3 * self.st:  # 所以信号周期的随机生成必须大于采样周期的两倍，本程序取三倍
                 break
         # 随机频率

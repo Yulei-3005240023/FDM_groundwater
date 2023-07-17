@@ -112,29 +112,41 @@ class Random_one_dimension_boussinesq_window(QMainWindow):
         self.flow.step_time(1)
         # 设置数值解求解参数
         self.ui.actionSet_FDM.triggered.connect(self.actionSet_FDM_parameter)
+
         # 计算得到的水头存储
         self.solve_fdm = None
         # 绘图选定时刻存放
         self.time_location = None
+        # 绘图选定位置存放
+        self.location = None
+
         # 监测降雨量期望变化
         self.ui.doubleSpinBox_rain.valueChanged.connect(self.Set_rain_expectation)
-        # 监测按钮《绘制数值解线性图》
+        # 监测按钮《绘制选定时刻的数值解线性图》
         self.ui.draw_solve_line.clicked.connect(self.draw_solve_line)
-
+        # 监测按钮《绘制位置-水头-时间三维图》
+        self.ui.draw_surface.clicked.connect(self.draw_solve_surface)
+        # 监测按钮《绘制选定位置的数值解线性图》
+        self.ui.draw_solve_line_location.clicked.connect(self.draw_solve_line_location)
+        # 监测按钮《选定位置数值解频域图》
+        self.ui.draw_solve_line_location_fft.clicked.connect(self.draw_location_fft)
         # 监测按钮《新建一个降雨量波动》
         self.ui.new_wave.clicked.connect(self.Set_new_wave)
+
         # 监测按钮《随机新建一个降雨量波动》
         self.ui.random_new_wave.clicked.connect(self.random_new_wave)
         # 实例化具象：新建降雨量波动
         self.Set_new_wave_window = Set_new_wave()
         # 降雨量波动函数
-        self.rain_function = None
+        self.rain_function = '0'
         # 降雨量波动存放
         self.wave_list = []
         # 监测按钮《删除上一个降雨量波动》
         self.ui.delete_wave.clicked.connect(self.delete_wave)
         # 监测按钮《查看时域图像》
-        self.ui.time_space_figure.clicked.connect(self.draw_rain_function)
+        self.ui.time_field_figure.clicked.connect(self.draw_rain_function)
+        # 监测按钮《查看频域图像》
+        self.ui.frequency_field_figure.clicked.connect(self.draw_rain_fft_function)
 
         # 创建Matplotlib绘图的Figure对象和Canvas对象(水头)
         # self.figure_head = plt.figure()
@@ -187,7 +199,8 @@ class Random_one_dimension_boussinesq_window(QMainWindow):
         self.Set_new_wave_window.signal_wave_parameter.connect(self.get_wave_parameter)
 
     def get_wave_parameter(self, wave_parameter):  # 主窗口获得波动设置参数的槽函数
-        self.wave_list.append('+' + str(wave_parameter[0]/1000) + '*sin(' + str(2 * 3.1415 / wave_parameter[1]) + '*t)')
+        self.wave_list.append(
+            '+' + str(wave_parameter[0] / 1000) + '*sin(' + str(2 * 3.1415 / wave_parameter[1]) + '*t)')
         self.rain_function = str(self.ui.doubleSpinBox_rain.value() / (1000 * 365))  # 重置降雨量函数
         for i in self.wave_list:
             self.rain_function += i
@@ -205,7 +218,7 @@ class Random_one_dimension_boussinesq_window(QMainWindow):
     def random_new_wave(self):
         self.flow.t_length(self.ui.spinBox_t_length.value())
         amplitude, cycle, frequency = self.flow.random_w()
-        self.wave_list.append('+' + str(amplitude) + '*sin(' + str(2 * 3.1415 / frequency) + '*t)')
+        self.wave_list.append('+' + str(amplitude) + '*sin(' + str(2 * 3.1415 * frequency) + '*t)')
         self.rain_function = str(self.ui.doubleSpinBox_rain.value() / (1000 * 365))
         for i in self.wave_list:
             self.rain_function += i
@@ -246,6 +259,8 @@ class Random_one_dimension_boussinesq_window(QMainWindow):
         self.ui.textBrowser.append('计算完毕，用时' + str(end_time - start_time) + '秒')
         # 设置时刻选择条
         self.set_time_choose_box()
+        # 设置位置选择条
+        self.set_location_choose_box()
 
     def set_time_choose_box(self):  # 设置时刻选择条
         time_all = int(self.flow.tl / self.flow.st) + 1
@@ -254,10 +269,17 @@ class Random_one_dimension_boussinesq_window(QMainWindow):
             '计算时长为：' + str(self.flow.tl) + '天，时间分割步长为：' + str(self.flow.st) + '天，共计有时刻' + str(
                 time_all) + '个。')
 
+    def set_location_choose_box(self):  # 设置位置选择条
+        location_all = int(self.flow.xl / self.flow.sl) + 1
+        self.ui.spinBox_X.setMaximum(location_all - 1)
+        self.ui.textBrowser_X.setPlainText(
+            '计算轴长为：' + str(self.flow.xl) + '米，空间分割步长为：' + str(self.flow.sl) + '米，共计有位置离散点' + str(
+                location_all) + '个。')
+
     def draw_rain_function(self):
         self.flow.t_length(self.ui.spinBox_t_length.value())
         # T轴单元格的数目
-        m = int(self.flow.tl / self.flow.sl) + 1
+        m = int(self.flow.tl / self.flow.st) + 1
         # T轴
         t = np.linspace(0, self.flow.tl, m)
         # 降雨量
@@ -266,11 +288,33 @@ class Random_one_dimension_boussinesq_window(QMainWindow):
         plt.rcParams['font.sans-serif'] = ['SimHei']
         # 解决负号为方块的问题
         plt.rcParams['axes.unicode_minus'] = False
-        fig = plt.figure(figsize=(5, 3))
+        fig = plt.figure(figsize=(6, 4))
         ax = fig.add_subplot()
         ax.plot(t, w, linewidth=1, antialiased=True)
         ax.set(ylabel='降雨量（m）', xlabel='时间轴（m）')
         plt.title('降雨量时域图像')
+        plt.show()
+
+    def draw_rain_fft_function(self):
+        self.flow.source_sink_term(self.rain_function)
+        w_fft = self.flow.fft_source_sink_term()  # 快速傅里叶变换
+        abs_w_fft = np.abs(w_fft)  # 取复数的模，为振幅
+        # T轴单元格的数目
+        m = int(self.flow.tl / self.flow.st) + 1
+        # 频率轴
+        w = np.linspace(0, m / (2 * self.flow.tl), int(m / 2))
+        # 归一化与取一半处理
+        normalization_half_abs_w_fft = np.linspace(0, m / (2 * self.flow.tl), int(m / 2))
+        for i in range(0, int(m / 2)):
+            if i == 0:
+                normalization_half_abs_w_fft[i] = abs_w_fft[i] / m
+            else:
+                normalization_half_abs_w_fft[i] = abs_w_fft[i] / (m / 2)
+        fig = plt.figure(figsize=(6, 4))
+        ax = fig.add_subplot()
+        ax.plot(w, normalization_half_abs_w_fft, linewidth=1, antialiased=True)
+        ax.set(ylabel='振幅（m）', xlabel='频率（hz）')
+        plt.title('降雨量频域图像')
         plt.show()
 
     def draw_head_line(self):
@@ -289,6 +333,57 @@ class Random_one_dimension_boussinesq_window(QMainWindow):
         self.draw_head_line()
         self.ui.textBrowser.append('第' + str(self.time_location) + '时刻数值解绘图，当前时刻各点解值为：')
         self.ui.textBrowser.append(str(self.solve_fdm[self.time_location]))
+
+    def draw_head_line_location(self):
+        self.location = self.ui.spinBox_X.value()
+        title = '数值解，空间差分步长为' + str(self.flow.sl) + '时间差分步长为' + str(
+            self.flow.st) + '，绘图位置为' + str(self.location * self.flow.sl) + 'm处'
+        self.flow.draw_location(self.solve_fdm, location=self.location, title=title)
+
+    def draw_solve_line_location(self):
+        # 判定能否绘图
+        if self.solve_fdm is not None:
+            pass
+        else:
+            QMessageBox.critical(self.ui, '错误', '请先进行数值解计算！')  # 未通过校验即报错
+            return None  # 结束代码
+        self.draw_head_line_location()
+        self.ui.textBrowser.append('第' + str(self.location) + '时刻数值解绘图。')
+
+    def draw_location_fft(self):
+        self.location = self.ui.spinBox_X.value()
+        H_fft = self.flow.fft_location(self.solve_fdm, self.location)
+        abs_H_fft = np.abs(H_fft)  # 取复数的模，为振幅
+        # T轴单元格的数目
+        m = int(self.flow.tl / self.flow.st) + 1
+        # 频率轴
+        w = np.linspace(0, m / (2 * self.flow.tl), int(m / 2))
+        # 归一化与取一半处理
+        normalization_half_abs_H_fft = np.linspace(0, m / (2 * self.flow.tl), int(m / 2))
+        for i in range(0, int(m / 2)):
+            if i == 0:
+                normalization_half_abs_H_fft[i] = abs_H_fft[i] / m
+            else:
+                normalization_half_abs_H_fft[i] = abs_H_fft[i] / (m / 2)
+        fig = plt.figure(figsize=(6, 4))
+        ax = fig.add_subplot()
+        ax.plot(w, normalization_half_abs_H_fft, linewidth=1, antialiased=True)
+        ax.set(ylabel='振幅（m）', xlabel='频率（hz）')
+        plt.title('水头变化频域图像')
+        plt.show()
+
+    def draw_head_surface(self):
+        title = '数值解，空间差分步长为' + str(self.flow.sl) + '时间差分步长为' + str(self.flow.st)
+        self.flow.draw_surface(self.solve_fdm, title=title)
+
+    def draw_solve_surface(self):
+        # 判定能否绘图
+        if self.solve_fdm is not None:
+            pass
+        else:
+            QMessageBox.critical(self.ui, '错误', '请先进行数值解计算！')  # 未通过校验即报错
+            return None  # 结束代码
+        self.draw_head_surface()
 
 
 # 按间距中的绿色按钮以运行脚本。
