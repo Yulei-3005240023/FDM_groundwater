@@ -1,4 +1,4 @@
-# FDM_undergroundwater
+# FDM_groundwater
  地下水运动方程的有限差分求解尝试
 中国地质大学（北京）水资源与环境学院
 2023/1/30：
